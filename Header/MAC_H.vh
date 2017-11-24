@@ -3,7 +3,7 @@
 `ifndef _MAC_H_
 `define _MAC_H_
 
-function integer log2;
+function automatic integer log2;
 	input [31:0] value;
 	reg [31:0] temp;
 	begin
