@@ -6,7 +6,7 @@ set hdlin_while_loop_iterations 16384
 
 analyze -format verilog {../../circuit_synthesis/syn_lib/FA.v ../../circuit_synthesis/syn_lib/ADD.v ../../circuit_synthesis/syn_lib/MULT.v ../../circuit_synthesis/syn_lib/MUX.v}
 
-analyze -format sverilog  MAC.sv
+analyze -format sverilog  {MULT.sv MAC.sv}
 
 foreach N {8 16 32} {
 elaborate MAC_TG -architecture verilog -library DEFAULT -parameters $N

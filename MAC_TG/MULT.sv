@@ -7,9 +7,9 @@ module MULT_ #( parameter N = 8, M = N )(
 	output [N-1:0] AX
 );
 
-	wire  [N-1:0] A_, A__;
-	wire  [M-1:0] X_, X__;
-	wire	[N+M-1:0] AX_, AX__;
+	wire [N-1:0] A_, A__;
+	wire [M-1:0] X_, X__;
+	wire [N-1:0] AX_, AX__;
 	
 	TwosComplement #(.N(N)) TwosComplement_A( 
 		.A(A),
