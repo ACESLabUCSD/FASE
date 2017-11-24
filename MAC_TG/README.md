@@ -14,5 +14,9 @@ To generate the TinyGarble netlists
 
 To run through TinyGarble
 ```
-  $ ./run_TG.sh
+  $ ./run_TG.sh <bit-width> <port_number>
+```
+Example
+```
+  $ ./run_TG.sh 32 1123
 ```
