@@ -1,13 +1,11 @@
 module tb_AES;
 
-reg clk;
 reg [127:0] state, key;
 wire [127:0] out;
 reg [127:0] out_ref;
  
 AES_128 uut
 (
-	.clk(clk), 
 	.key(key),
 	.state(state),
 	.out(out)
@@ -19,12 +17,9 @@ AES_128 uut
 		if(out == out_ref) $display("Pass");
 		else $display("Fail! Output should be %x", out_ref);
 	end
-
-always #50 clk = ~clk;
 	
 initial begin
 	//http://aes.online-domain-tools.com/
-	clk = 0;
 	#10;
 	state = 128'h4072da1240f930f7d3c8cf8b9322042e;
 	key = 128'he4dc18adf3d05ec9e4dcc41acb990007;

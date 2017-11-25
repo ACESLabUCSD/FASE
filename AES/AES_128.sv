@@ -3,7 +3,6 @@
 
 //AES 128 bit, ECB mode
 module AES_128(
-	clk,
 	state,
 	key,
 	out
@@ -12,14 +11,12 @@ module AES_128(
 	
   localparam    NR = 10;
 
-  input 				   clk;
-  input   		[127:0]    key;
-  input   		[127:0]    state;
-  output  reg	[127:0]    out;
-  wire  		[127:0]    out_wire;
+  input   	[127:0]	key;
+  input		[127:0]	state;
+  output	[127:0]	out;
+  wire		[127:0]	out_wire;
   
-  always @(posedge clk)
-	out = changeEndian(out_wire);
+  assign out = changeEndian(out_wire);
   
   wire    		[128*(NR+1)-1:0] expandedKey;
   wire    		[127:0]     expandedKeyi[NR:0];
