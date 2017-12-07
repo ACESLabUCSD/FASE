@@ -23,4 +23,3 @@ work/*
 *.elf
 *.map
 *.mem
-*.hex 
