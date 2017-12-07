@@ -31,7 +31,7 @@ module MxM #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimen
 		.Y(Y1)
 	);
 	
-	always @(posedge clk)
+	always @(posedge clk or posedge rst)
 		if(rst) begin
 			n <= 0; 
 		end
