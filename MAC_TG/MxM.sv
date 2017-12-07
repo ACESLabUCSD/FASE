@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `include "../Header/MAC_H.vh"
  
-module MxM_TG #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimension of the matrices: (MxN)x(NxP) -> (MxP)
+module MxM_TG #(parameter W = 8, N = 1000)(
 	input clk, rst,
 	input [W-1:0] g_input, e_input,
 	output [W-1:0] o
@@ -15,7 +15,7 @@ module MxM_TG #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner di
 
 endmodule
 
-module MxM #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimension of the matrices: (MxN)x(NxP) -> (MxP)
+module MxM #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimension of the matrices: (MxN)x(NxP) -> (MxP), run for M*N*P cc
 	input clk, rst,
 	input [W-1:0] A, X,
 	output reg [W-1:0] Y
