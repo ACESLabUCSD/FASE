@@ -4,7 +4,7 @@ MAC without privacy
 
 To compile the Verilog files 
 ```
-  $ ./compile.sh
+  $ ./compile.sh <1 for MAC, 2 for MxM>
 ```
 
 To generate the TinyGarble netlists
