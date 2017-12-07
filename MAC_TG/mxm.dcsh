@@ -10,7 +10,7 @@ analyze -format sverilog  {MULT.sv MAC.sv MxM.sv}
 
 foreach W {8 16 32} {
 foreach N {100 1000 10000} {
-elaborate MxM -architecture verilog -library DEFAULT -parameters $W,$N
+elaborate MxM_TG -architecture verilog -library DEFAULT -parameters $W,$N
 set_max_area -ignore_tns 0 
 set_flatten false -design *
 set_structure -design * false
