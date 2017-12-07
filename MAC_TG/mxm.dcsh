@@ -1,0 +1,27 @@
+set search_path [concat . ../../circuit_synthesis/lib/dff_full/]
+set target_library ../../circuit_synthesis/lib/dff_full/dff_full.db
+set link_library ../../circuit_synthesis/lib/dff_full/dff_full.db
+set symbol_library ../../circuit_synthesis/lib/generic.sdb
+set hdlin_while_loop_iterations 16384
+
+analyze -format verilog {../../circuit_synthesis/syn_lib/FA.v ../../circuit_synthesis/syn_lib/ADD.v ../../circuit_synthesis/syn_lib/TwosComplement.v ../../circuit_synthesis/syn_lib/ADD_.v ../../circuit_synthesis/syn_lib/MULT.v ../../circuit_synthesis/syn_lib/MUX.v}
+
+analyze -format sverilog  {MULT.sv MAC.sv MxM.sv}
+
+foreach W {8 16 32} {
+foreach N {100 1000 10000} {
+elaborate MxM -architecture verilog -library DEFAULT -parameters $W,$N
+set_max_area -ignore_tns 0 
+set_flatten false -design *
+set_structure -design * false
+set_resource_allocation area_only
+report_compile_options
+compile -ungroup_all -boundary_optimization  -map_effort high -area_effort high -no_design_rule
+
+set verilogout_no_tri true
+set_fix_multiple_port_nets -all -buffer_constants
+
+write -hierarchy -format verilog -output syn/MxM_${W}_${N}.v
+}
+}
+exit

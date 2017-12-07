@@ -13,7 +13,7 @@ function automatic integer log2;
 	end
 endfunction
 
-function [127:0] changeEndian;
+function automatic [127:0] changeEndian;
 	input [127:0] text;
 	begin
 		changeEndian = {
