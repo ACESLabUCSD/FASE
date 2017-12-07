@@ -21,7 +21,8 @@ module MxM #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimen
 	output reg [W-1:0] Y
 );
 	
-	reg [W-1:0] Y0, Y1; 
+	reg [W-1:0] Y0; 
+	wire [W-1:0] Y1; 
 	reg [log2(N)-1:0] n; 
 	
 	MAC #(.N(W)) _MAC(
@@ -34,16 +35,16 @@ module MxM #(parameter W = 8, N = 1000)( //W = bit-width, N = common inner dimen
 	always @(posedge clk or posedge rst)
 		if(rst) begin
 			n <= 0; 
+			Y0 <= 0;
+			Y <= 0;
 		end
-		else begin		
-			n <= n+1;	
+		else begin					
 			if (n == N-1) n <= 0; 
-
+			else n <= n+1;
 			if (n == 0) begin
 				Y0 <= 0;
 				Y <= Y1;
-			end
-			else Y0 <= Y1;
+			end Y0 <= Y1;
 		end
 	
 endmodule
