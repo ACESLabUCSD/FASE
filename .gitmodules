@@ -1,0 +1,3 @@
+[submodule "hostCPU_TG "]
+	path = hostCPU
+	url = git@github.com:siamumar/hostCPU_TG.git
