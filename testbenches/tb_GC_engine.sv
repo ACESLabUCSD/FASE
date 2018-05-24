@@ -1,4 +1,4 @@
-// Copyright 2015 Songhori, Ebrahim
+// Copyright 2018 Songhori, Ebrahim and Hussain, Siam Umar
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,32 +50,32 @@ module tb_GC_engine;
 	begin
 		clk = 0;
 
-		R = 128'hffffffff_ffffffff_ffffffff_ffffffff ;
-		AES_key = 128'h070099cb_1ac4dce4_c95ed0f3_ad18dce4;
+		R = 128'h93D5B035B782DBB4A04097B7B6D7DBB5 ;
+		AES_key = 128'hEC45CB722FC0DBA74829739EC516DBA7;
 
-		cid = 20'd1;
-		gid = 20'd2;
+		cid = 20'd0;
+		gid = 20'd0;
 
 		in0_label = 128'hX;
 		in1_label = 128'hX;
 
 		@(posedge clk);
 		
-		in0_label = 128'h2e042293_8bcfc8d2_f730f940_12da7244;
-		in1_label = 128'h1dc0dcda_c3c3ce43_a3ea9323_b42574d5;
+		in0_label = 128'h68B695F9E1BFC0A9646FBB88694A66F7;
+		in1_label = 128'hF965EA419F90407ABA09D714C18F5F5C;
 		
-		out_label_ref = 128'h83da0cdb_44f17220_3032a794_e80f7db5;
-		t0_ref = 128'hd187df08_33af8db7_16c9353a_62be8d18;
-		t1_ref = 128'h190b405c_f77799bd_e54c9275_e96dff40;			
+		out_label_ref = 128'hF42A5CA5E208CF5AA2EADFC8CA6CC33A;
+		t0_ref = 128'h1C64A9FAFFB6905471A6B17B1979977D;
+		t1_ref = 128'hC17835695FF945D30B64A1973415FC1B;			
 		
 		@(posedge clk);
 		
-		in0_label = 128'h2b73eabd_0406297d_5da1ab0d_bab1fc86;
-		in1_label = 128'hf3d20ae1_b32a3962_68486f2b_6b6b27c1;
+		in0_label = 128'h5271DAD279EFDE733D23385036CB03D9;
+		in1_label = 128'hBA789E13091AD85C2A9EE573D06ED20B;
 		
-		out_label_ref = 128'h596923b3f5f7cb06b518ba0681ea0737;
-		t0_ref = 128'h0a045702af0e3335da0a651c1f758b83;
-		t1_ref = 128'hb985b769ddc6c6ea813dbfaa79ede20b;	
+		out_label_ref = 128'h06D6709E0102033E142A5727BDFB3260;
+		t0_ref = 128'h44862828837B832B5ACB8D8E9E1B2F6C;
+		t1_ref = 128'hC3204E1009BF70C4CB86852110689390;	
 		
 		
 	end	
