@@ -37,4 +37,31 @@ function automatic [127:0] changeEndian;
 	end
 endfunction
 
+parameter ANDGATE	= 4'b1000; //8
+parameter ANDNGATE	= 4'b0100; //4
+parameter NANDGATE	= 4'b0111; //7
+parameter NANDNGATE = 4'b1011; //11
+parameter ORGATE	= 4'b1110; //14
+parameter ORNGATE	= 4'b1101; //13
+parameter NORGATE	= 4'b0001; //1
+parameter NORNGATE	= 4'b0010; //2
+parameter XORGATE	= 4'b0110; //6
+parameter XNORGATE	= 4'b1001; //9
+parameter NOTGATE	= 4'b1100; //12
+parameter DFFGATE	= (-1);
+
+function automatic integer Type2V;
+	input [3:0] gateType;
+begin
+	if (gateType == ANDGATE) Type2V =  3'b000;
+	else if (gateType == ANDNGATE) Type2V =  3'b010;
+	else if (gateType == NANDGATE) Type2V =  3'b100;
+	else if (gateType == NANDNGATE) Type2V =  3'b110;
+	else if (gateType == ORGATE) Type2V =  3'b111;
+	else if (gateType == ORNGATE) Type2V =  3'b101;
+	else if (gateType == NORGATE) Type2V =  3'b011;
+	else if (gateType == NORNGATE) Type2V =  3'b001;
+end
+endfunction
+
 `endif 
