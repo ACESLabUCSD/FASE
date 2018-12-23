@@ -14,7 +14,10 @@
 
 //This module garbles a single AND gate per cycle
 
+`include "../Header/MAC_H.vh"
+
 module GC_engine #(parameter S=20, K=128 )(	
+	input					clk, rst,
 	input 			[K-1:0]	R, AES_key,
 	input			[S-1:0]	cid, gid,
 	input			[3:0]	g_logic,
@@ -23,101 +26,135 @@ module GC_engine #(parameter S=20, K=128 )(
 );
 
 	logic	[K-1:0]	in0_label_R, in1_label_R;
-	logic	[2:0]	v;
 	
-	logic	[K-1:0]	A0, A1, B0, B1;
-	logic	[K-1:0]	tweak0, tweak1;
+	logic	[K-1:0]	A0_beg, A1_beg, B0_beg, B1_beg;
+	logic	[K-1:0]	A0_end, A1_end, B0_end, B1_end;
+	logic	[K-1:0]	A0_PL[0:NR_AES-1];
+	logic	[K-1:0]	A1_PL[0:NR_AES-1];
+	logic	[K-1:0]	B0_PL[0:NR_AES-1];
+	logic	[K-1:0]	B1_PL[0:NR_AES-1];
+	
+	logic	[2:0]	v_beg, v_end;
+	logic	[2:0]	v_PL[0:NR_AES-1];
+	logic	[S-1:0]	cid_end, gid_end;
+	logic	[S-1:0]	cid_PL[0:NR_AES-1];
+	logic	[S-1:0]	gid_PL[0:NR_AES-1];
+	
+	logic	[K-1:0]	tweak0_beg, tweak1_beg;
+	logic	[K-1:0]	tweak0_end, tweak1_end;
+	
 	logic 			pa, pb;
 
-	logic	[K-1:0]	 mask0, mask1, mask2, mask3;
-	logic	[K-1:0]	 key0, key1, key2, key3;
-	logic	[K-1:0]	 key0_endian, key1_endian, key2_endian, key3_endian;
-	logic	[K-1:0]	 mask_key0, mask_key1, mask_key2, mask_key3;
+	logic	[K-1:0]	mask0_beg, mask1_beg, mask2_beg, mask3_beg;
+	logic	[K-1:0]	mask0_end, mask1_end, mask2_end, mask3_end;
+	logic	[K-1:0]	key0, key1, key2, key3;
+	logic	[K-1:0]	key0_endian, key1_endian, key2_endian, key3_endian;
+	logic	[K-1:0]	mask_key0, mask_key1, mask_key2, mask_key3;
 
 	logic	[K-1:0]	G, E;	
 	logic	[K-1:0]	C0, C1;
 
 	AES_128 AES_128_0(
-		.state(changeEndian(mask0)), 
+		.clk(clk), .rst(rst),
+		.state(changeEndian(mask0_beg)), 
 		.key(changeEndian(AES_key)), 
 		.out(key0_endian)
 	);
 
 	AES_128 AES_128_1(
-		.state(changeEndian(mask1)), 
+		.clk(clk), .rst(rst),
+		.state(changeEndian(mask1_beg)), 
 		.key(changeEndian(AES_key)), 
 		.out(key1_endian)
 	);
 
 	AES_128 AES_128_2(
-		.state(changeEndian(mask2)), 
+		.clk(clk), .rst(rst),
+		.state(changeEndian(mask2_beg)), 
 		.key(changeEndian(AES_key)), 
 		.out(key2_endian)
 	);
 
 	AES_128 AES_128_3(
-		.state(changeEndian(mask3)), 
+		.clk(clk), .rst(rst),
+		.state(changeEndian(mask3_beg)), 
 		.key(changeEndian(AES_key)), 
 		.out(key3_endian)
 	);
 	
 	always_comb begin
 		
-		v = Type2V(g_logic);
+		v_beg = Type2V(g_logic);
 		in0_label_R = in0_label ^ R;
 		in1_label_R = in1_label ^ R;
 		
-		if(v[0]) begin
-			A0 = in0_label_R;
-			A1 = in0_label;
+		if(v_beg[0]) begin
+			A0_beg = in0_label_R;
+			A1_beg = in0_label;
 		end
 		else begin
-			A0 = in0_label;
-			A1 = in0_label_R;			
+			A0_beg = in0_label;
+			A1_beg = in0_label_R;			
 		end
 		
-		if(v[1]) begin
-			B0 = in1_label_R;
-			B1 = in1_label;
+		if(v_beg[1]) begin
+			B0_beg = in1_label_R;
+			B1_beg = in1_label;
 		end
 		else begin
-			B0 = in1_label;
-			B1 = in1_label_R;			
+			B0_beg = in1_label;
+			B1_beg = in1_label_R;			
 		end
 		
-		/*A0 = in0_label;
-		B0 = in1_label;
-		A1 = A0 ^ R;
-		B1 = B0 ^ R;*/
+		/*before AES*/
 	
-		tweak0 = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b0};
-		tweak1 = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b1};
+		tweak0_beg = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b0};
+		tweak1_beg = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b1};
 	
-		mask0 = A0 ^ tweak0;
-		mask1 = A1 ^ tweak0;
-		mask2 = B0 ^ tweak1;
-		mask3 = B1 ^ tweak1;
+		mask0_beg = A0_beg ^ tweak0_beg;
+		mask1_beg = A1_beg ^ tweak0_beg;
+		mask2_beg = B0_beg ^ tweak1_beg;
+		mask3_beg = B1_beg ^ tweak1_beg;
 		
+		/*read AES output*/
 		key0 = changeEndian(key0_endian);
 		key1 = changeEndian(key1_endian);
 		key2 = changeEndian(key2_endian);
 		key3 = changeEndian(key3_endian);
+		
+		/*after AES*/
+		
+		A0_end = A0_PL[NR_AES-1];
+		A1_end = A1_PL[NR_AES-1];
+		B0_end = B0_PL[NR_AES-1];
+		B1_end = B1_PL[NR_AES-1];
+		cid_end = cid_PL[NR_AES-1];
+		gid_end = gid_PL[NR_AES-1];
+		v_end = v_PL[NR_AES-1];
 	
-		mask_key0 = mask0 ^ key0;
-		mask_key1 = mask1 ^ key1;
-		mask_key2 = mask2 ^ key2;
-		mask_key3 = mask3 ^ key3;
+		tweak0_end = {{(K/2-S){1'b0}}, cid_end, {(K/2-S-1){1'b0}}, gid_end, 1'b0};
+		tweak1_end = {{(K/2-S){1'b0}}, cid_end, {(K/2-S-1){1'b0}}, gid_end, 1'b1};
 	
-		pa = A0[0];
-		pb = B0[0];
+		mask0_end = A0_end ^ tweak0_end;
+		mask1_end = A1_end ^ tweak0_end;
+		mask2_end = B0_end ^ tweak1_end;
+		mask3_end = B1_end ^ tweak1_end;
+	
+		mask_key0 = mask0_end ^ key0;
+		mask_key1 = mask1_end ^ key1;
+		mask_key2 = mask2_end ^ key2;
+		mask_key3 = mask3_end ^ key3;
+	
+		pa = A0_end[0];
+		pb = B0_end[0];
 	
 		t0 = (pb)?(mask_key0 ^ mask_key1 ^ R):(mask_key0 ^ mask_key1);
-		t1 = mask_key2 ^ mask_key3 ^ A0;
+		t1 = mask_key2 ^ mask_key3 ^ A0_end;
 	
 		G = (pa)?(mask_key0 ^ t0):(mask_key0);
-		E = (pb)?(mask_key2 ^ t1 ^ A0):(mask_key2);
+		E = (pb)?(mask_key2 ^ t1 ^ A0_end):(mask_key2);
 		
-		if (v[2]) begin
+		if (v_end[2]) begin
 			C0 = G^E^R;
 			C1 = G^E;
 		end
@@ -125,12 +162,44 @@ module GC_engine #(parameter S=20, K=128 )(
 			C0 = G^E;
 			C1 = G^E^R;
 		end
-		
-		/*C0 = G ^ E;
-		C1 = C0 ^ R;*/
 	
-		out_label = C0;
-		
+		out_label = C0;		
+	end
+	
+	integer k;
+	
+	always_ff @(posedge clk or posedge rst) begin
+		for(k = 0; k < NR_AES; k = k+1) begin
+			if(rst)	begin 
+				A0_PL[k] <= 'b0;
+				A1_PL[k] <= 'b0;
+				B0_PL[k] <= 'b0;
+				B1_PL[k] <= 'b0;
+				cid_PL[k] <= 'b0;
+				gid_PL[k] <= 'b0;
+				v_PL[k] <= 'b0;
+			end
+			else begin 
+				if (k == 0) begin
+					A0_PL[k]	<=  A0_beg;
+					A1_PL[k]	<=  A1_beg;
+					B0_PL[k]	<=  B0_beg;
+					B1_PL[k]	<=  B1_beg;
+					cid_PL[k]	<=  cid;
+					gid_PL[k]	<=  gid;
+					v_PL[k]		<=  v_beg;
+				end
+				else begin 
+					A0_PL[k]	<= A0_PL[k-1];
+					A1_PL[k]	<= A1_PL[k-1];
+					B0_PL[k]	<= B0_PL[k-1];
+					B1_PL[k]	<= B1_PL[k-1];
+					cid_PL[k]	<= cid_PL[k-1];
+					gid_PL[k]	<= gid_PL[k-1];
+					v_PL[k]		<= v_PL[k-1];
+				end
+			end
+		end
 	end
 	
 endmodule
