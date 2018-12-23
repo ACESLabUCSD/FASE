@@ -29,16 +29,9 @@ module GC_engine #(parameter S=20, K=128 )(
 	
 	logic	[K-1:0]	A0_beg, A1_beg, B0_beg, B1_beg;
 	logic	[K-1:0]	A0_end, A1_end, B0_end, B1_end;
-	logic	[K-1:0]	A0_PL[0:NR_AES-1];
-	logic	[K-1:0]	A1_PL[0:NR_AES-1];
-	logic	[K-1:0]	B0_PL[0:NR_AES-1];
-	logic	[K-1:0]	B1_PL[0:NR_AES-1];
 	
 	logic	[2:0]	v_beg, v_end;
-	logic	[2:0]	v_PL[0:NR_AES-1];
 	logic	[S-1:0]	cid_end, gid_end;
-	logic	[S-1:0]	cid_PL[0:NR_AES-1];
-	logic	[S-1:0]	gid_PL[0:NR_AES-1];
 	
 	logic	[K-1:0]	tweak0_beg, tweak1_beg;
 	logic	[K-1:0]	tweak0_end, tweak1_end;
@@ -53,6 +46,48 @@ module GC_engine #(parameter S=20, K=128 )(
 
 	logic	[K-1:0]	G, E;	
 	logic	[K-1:0]	C0, C1;
+	
+	FIFO #(.N(K), .S(NR_AES)) FIFO_A0(	
+		.clk(clk), .rst(rst),
+		.in(A0_beg),
+		.out(A0_end)
+	);
+	
+	FIFO #(.N(K), .S(NR_AES)) FIFO_A1(	
+		.clk(clk), .rst(rst),
+		.in(A1_beg),
+		.out(A1_end)
+	);
+	
+	FIFO #(.N(K), .S(NR_AES)) FIFO_B0(	
+		.clk(clk), .rst(rst),
+		.in(B0_beg),
+		.out(B0_end)
+	);
+	
+	FIFO #(.N(K), .S(NR_AES)) FIFO_B1(	
+		.clk(clk), .rst(rst),
+		.in(B1_beg),
+		.out(B1_end)
+	);
+	
+	FIFO #(.N(S), .S(NR_AES)) FIFO_cid(	
+		.clk(clk), .rst(rst),
+		.in(cid),
+		.out(cid_end)
+	);
+	
+	FIFO #(.N(S), .S(NR_AES)) FIFO_gid(	
+		.clk(clk), .rst(rst),
+		.in(gid),
+		.out(gid_end)
+	);
+	
+	FIFO #(.N(3), .S(NR_AES)) FIFO_v(	
+		.clk(clk), .rst(rst),
+		.in(v_beg),
+		.out(v_end)
+	);
 
 	AES_128 AES_128_0(
 		.clk(clk), .rst(rst),
@@ -123,14 +158,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		key3 = changeEndian(key3_endian);
 		
 		/*after AES*/
-		
-		A0_end = A0_PL[NR_AES-1];
-		A1_end = A1_PL[NR_AES-1];
-		B0_end = B0_PL[NR_AES-1];
-		B1_end = B1_PL[NR_AES-1];
-		cid_end = cid_PL[NR_AES-1];
-		gid_end = gid_PL[NR_AES-1];
-		v_end = v_PL[NR_AES-1];
 	
 		tweak0_end = {{(K/2-S){1'b0}}, cid_end, {(K/2-S-1){1'b0}}, gid_end, 1'b0};
 		tweak1_end = {{(K/2-S){1'b0}}, cid_end, {(K/2-S-1){1'b0}}, gid_end, 1'b1};
@@ -164,42 +191,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		end
 	
 		out_label = C0;		
-	end
-	
-	integer k;
-	
-	always_ff @(posedge clk or posedge rst) begin
-		for(k = 0; k < NR_AES; k = k+1) begin
-			if(rst)	begin 
-				A0_PL[k] <= 'b0;
-				A1_PL[k] <= 'b0;
-				B0_PL[k] <= 'b0;
-				B1_PL[k] <= 'b0;
-				cid_PL[k] <= 'b0;
-				gid_PL[k] <= 'b0;
-				v_PL[k] <= 'b0;
-			end
-			else begin 
-				if (k == 0) begin
-					A0_PL[k]	<=  A0_beg;
-					A1_PL[k]	<=  A1_beg;
-					B0_PL[k]	<=  B0_beg;
-					B1_PL[k]	<=  B1_beg;
-					cid_PL[k]	<=  cid;
-					gid_PL[k]	<=  gid;
-					v_PL[k]		<=  v_beg;
-				end
-				else begin 
-					A0_PL[k]	<= A0_PL[k-1];
-					A1_PL[k]	<= A1_PL[k-1];
-					B0_PL[k]	<= B0_PL[k-1];
-					B1_PL[k]	<= B1_PL[k-1];
-					cid_PL[k]	<= cid_PL[k-1];
-					gid_PL[k]	<= gid_PL[k-1];
-					v_PL[k]		<= v_PL[k-1];
-				end
-			end
-		end
-	end
-	
+	end	
+		
 endmodule
