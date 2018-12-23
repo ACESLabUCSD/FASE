@@ -3,36 +3,29 @@
 
 //AES 128 bit, ECB mode
 module AES_128(
-	state,
-	key,
-	out
+	input				clk, rst,
+	input   	[127:0]	key,
+	input		[127:0]	state,
+	output		[127:0]	out
 );
-
 	
-  localparam    NR = 10;
-
-  input   	[127:0]	key;
-  input		[127:0]	state;
-  output	[127:0]	out;
-  wire		[127:0]	out_wire;
-  
+  logic		[127:0]	out_wire;  
   assign out = changeEndian(out_wire);
   
-  wire    		[128*(NR+1)-1:0] expandedKey;
-  wire    		[127:0]     expandedKeyi[NR:0];
-  wire    		[127:0]     x1[NR-1:0];
-  wire    		[127:0]     x2[NR-1:0];
-  wire    		[127:0]     x3[NR-1:0];
-  wire    		[127:0]     x4[NR-2:0];
-
+  logic    		[128*(NR_AES+1)-1:0] expandedKey;
+  logic    		[127:0]     expandedKeyi[NR_AES:0];
+  logic    		[127:0]     x1[NR_AES-1:0];
+  logic    		[127:0]     x1_reg[NR_AES-1:0];
+  logic    		[127:0]     x2[NR_AES-1:0];
+  logic    		[127:0]     x3[NR_AES-1:0];
+  logic    		[127:0]     x4[NR_AES-2:0];
 
   genvar i;
-
+	/*in GC key is fixed for one netlist, so there is no pipeline for the keys, will not work in a generic setting where keys are regularly updated.*/
   KeyExpansion e (.key(changeEndian(key)), .expandedKey(expandedKey));
 
-
   generate 
-  for(i=0;i<(NR+1);i=i+1)
+  for(i=0;i<(NR_AES+1);i=i+1)
   begin:EXPANDKEY
     assign expandedKeyi[i] = expandedKey[128*(i+1)-1:128*i];
   end
@@ -41,36 +34,43 @@ module AES_128(
   AddRoundKey a(.x(changeEndian(state)), .y(expandedKeyi[0]), .z(x1[0]));
 
   generate 
-  for(i=0;i<NR;i=i+1)
+  for(i=0;i<NR_AES;i=i+1)
   begin:SUBBYTES
-    SubBytes a(.x(x1[i]), .z(x2[i]));
+    SubBytes a(.x(x1_reg[i]), .z(x2[i]));
   end
   endgenerate
 
   generate 
-  for(i=0;i<NR;i=i+1)
+  for(i=0;i<NR_AES;i=i+1)
   begin:SHIFTROWS
     ShiftRows c(.x(x2[i]), .z(x3[i]));
   end
   endgenerate
 
   generate 
-  for(i=0;i<NR-1;i=i+1)
+  for(i=0;i<NR_AES-1;i=i+1)
   begin:MIXCOLUMNS
     MixColumns d(.x(x3[i]), .z(x4[i]));
   end
   endgenerate
 
   generate 
-  for(i=0;i<NR;i=i+1)
+  for(i=0;i<NR_AES;i=i+1)
   begin:ADDROUNDKEY
-    if(i==NR-1) begin:LAST
+    if(i==NR_AES-1) begin:LAST
       AddRoundKey a(.x(x3[i]), .y(expandedKeyi[i+1]), .z(out_wire));
     end else begin:ELSE
       AddRoundKey a(.x(x4[i]), .y(expandedKeyi[i+1]), .z(x1[i+1]));
     end
   end
   endgenerate
+  
+  integer k;
+  always_ff @(posedge clk or posedge rst) begin
+	for(k=0;k<NR_AES;k=k+1)
+		if(rst)	x1_reg[k] <= 'b0;
+		else x1_reg[k] <= x1[k];
+  end
 
 
 endmodule

@@ -64,4 +64,6 @@ begin
 end
 endfunction
 
+parameter NR_AES = 10;
+
 `endif 
