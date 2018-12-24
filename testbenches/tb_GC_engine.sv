@@ -35,7 +35,7 @@ module tb_GC_engine;
 
 	GC_engine #(.S(S), .K(K)) uut (  
 		.clk(clk), .rst(rst),
-		.R(R),// .AES_key(AES_key),
+		.R(R),
 		.AES_expandedKey(AES_expandedKey),		
 		.cid(cid), .gid(gid),
 		.g_logic(g_logic),
@@ -44,20 +44,10 @@ module tb_GC_engine;
 		.out_label(out_label)
 	);	
 	
-	parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/all_logic/";
-	parameter KEYFILE = "Keys.txt";
-	parameter IN0FILE = "In0.txt";
-	parameter IN1FILE = "In1.txt";
-	parameter LOGICFILE = "Logics.txt";
-	parameter LABELFILE = "Labels.txt";
-	parameter TABLEFILE = "Tables.txt";
-	parameter OLABELFILE = "OLabels.txt";
-	
-	logic	[K-1:0]	KEYS [0:1];
+	logic	[K-1:0]	KEYS [0:19];
 	logic	[3:0]	IN0 [0:7]; 
 	logic	[3:0]	IN1 [0:7]; 
 	logic	[3:0]	G_LOGICS [0:7]; 
-	logic	[K-1:0]	IN_LABELS [0:17]; //The first two labels from the Labels file are assigned to constants
 	logic	[K-1:0]	T_REF [0:15];
 	logic	[K-1:0]	OUT_LABELS_REF [0:15];
 	
@@ -72,7 +62,6 @@ module tb_GC_engine;
 		$readmemh({LOC, IN0FILE}, IN0);
 		$readmemh({LOC, IN1FILE}, IN1);
 		$readmemh({LOC, LOGICFILE}, G_LOGICS);
-		$readmemh({LOC, LABELFILE}, IN_LABELS);
 		$readmemh({LOC, TABLEFILE}, T_REF);
 		$readmemh({LOC, OLABELFILE}, OUT_LABELS_REF);
 		
@@ -94,11 +83,11 @@ module tb_GC_engine;
 			@(posedge clk);	
 			if(l < 8) begin
 				gid = l;	
-				in0 = IN0[l] + 2; //The first two labels from the Labels file are assigned to constants
-				in1 = IN1[l] + 2;
+				in0 = IN0[l] + 4; //The two labels from the Keys file after R and AES keys are assigned to constants
+				in1 = IN1[l] + 4;
 				g_logic = G_LOGICS[l];
-				in0_label = IN_LABELS[in0];
-				in1_label = IN_LABELS[in1];	
+				in0_label = KEYS[in0];
+				in1_label = KEYS[in1];	
 			end
 			if(l > NR_AES) begin
 				t0_ref = T_REF[2*(l-NR_AES-1)];

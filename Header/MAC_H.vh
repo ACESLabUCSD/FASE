@@ -66,4 +66,14 @@ endfunction
 
 parameter NR_AES = 10;
 
+
+/*simulation files*/	
+parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/all_logic/";
+parameter KEYFILE = "Keys.txt";
+parameter IN0FILE = "In0.txt";
+parameter IN1FILE = "In1.txt";
+parameter LOGICFILE = "Logics.txt";
+parameter TABLEFILE = "Tables.txt";
+parameter OLABELFILE = "OLabels.txt";
+
 `endif 
