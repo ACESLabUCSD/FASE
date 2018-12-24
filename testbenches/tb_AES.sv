@@ -9,7 +9,7 @@ module tb_AES;
 	logic	[127:0]	out;
 	
 	KeyExpansion e (
-		.key(changeEndian(key)), 
+		.key(key), 
 		.expandedKey(expandedKey)
 	);
 	 
@@ -33,14 +33,14 @@ module tb_AES;
 		rst = 'b0;
 		
 		//http://aes.online-domain-tools.com/
-		key = 128'he4dc18adf3d05ec9e4dcc41acb990007; //in GC key is fixed for one netlist, so there is no pipeline for the keys, will not work in a generic setting where keys are regularly updated.
+		key = changeEndian(128'he4dc18adf3d05ec9e4dcc41acb990007); //in GC key is fixed for one netlist, so there is no pipeline for the keys, will not work in a generic setting where keys are regularly updated.
 		
 		@(posedge clk);
-		state = 128'h4072da1240f930f7d3c8cf8b9322042e;
-		out_ref_in = 128'hd225406f484809186cb5d86be4098445;
+		state = changeEndian(128'h4072da1240f930f7d3c8cf8b9322042e);
+		out_ref_in = changeEndian(128'hd225406f484809186cb5d86be4098445);
 		@(posedge clk);
-		state = 128'h110687e2636afdb84c12653d55f3bae1;	
-		out_ref_in = 128'hccbf51af8e0bbc46283481a211e9c77b;
+		state = changeEndian(128'h110687e2636afdb84c12653d55f3bae1);	
+		out_ref_in = changeEndian(128'hccbf51af8e0bbc46283481a211e9c77b);
 	end
 
 	always_ff @(posedge clk or posedge rst) begin
@@ -56,7 +56,7 @@ module tb_AES;
 		end
 			
 		if(l > NR_AES) begin
-			$display("out = %x", (out));
+			$display("out = %x", out);
 			assert(out == out_ref_out) $display("Pass");
 			else $error("Output should be %x", out_ref_out);
 		end

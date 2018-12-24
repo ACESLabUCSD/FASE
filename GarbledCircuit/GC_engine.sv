@@ -42,7 +42,6 @@ module GC_engine #(parameter S=20, K=128 )(
 	logic	[K-1:0]	mask0_beg, mask1_beg, mask2_beg, mask3_beg;
 	logic	[K-1:0]	mask0_end, mask1_end, mask2_end, mask3_end;
 	logic	[K-1:0]	key0, key1, key2, key3;
-	logic	[K-1:0]	key0_endian, key1_endian, key2_endian, key3_endian;
 	logic	[K-1:0]	mask_key0, mask_key1, mask_key2, mask_key3;
 
 	logic	[K-1:0]	G, E;	
@@ -92,33 +91,34 @@ module GC_engine #(parameter S=20, K=128 )(
 
 	AES_128 AES_128_0(
 		.clk(clk), .rst(rst),
-		.state(changeEndian(mask0_beg)), 
+		.state(mask0_beg), 
 		.expandedKey(AES_expandedKey), 
-		.out(key0_endian)
+		.out(key0)
 	);
 
 	AES_128 AES_128_1(
 		.clk(clk), .rst(rst),
-		.state(changeEndian(mask1_beg)),
+		.state(mask1_beg),
 		.expandedKey(AES_expandedKey), 
-		.out(key1_endian)
+		.out(key1)
 	);
 
 	AES_128 AES_128_2(
 		.clk(clk), .rst(rst),
-		.state(changeEndian(mask2_beg)),
+		.state(mask2_beg),
 		.expandedKey(AES_expandedKey), 
-		.out(key2_endian)
+		.out(key2)
 	);
 
 	AES_128 AES_128_3(
 		.clk(clk), .rst(rst),
-		.state(changeEndian(mask3_beg)), 
+		.state(mask3_beg), 
 		.expandedKey(AES_expandedKey),
-		.out(key3_endian)
+		.out(key3)
 	);
 	
-	always_comb begin
+	always_comb begin		
+		/*before AES*/
 		
 		v_beg = Type2V(g_logic);
 		in0_label_R = in0_label ^ R;
@@ -141,8 +141,6 @@ module GC_engine #(parameter S=20, K=128 )(
 			B0_beg = in1_label;
 			B1_beg = in1_label_R;			
 		end
-		
-		/*before AES*/
 	
 		tweak0_beg = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b0};
 		tweak1_beg = {{(K/2-S){1'b0}}, cid, {(K/2-S-1){1'b0}}, gid, 1'b1};
@@ -151,12 +149,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		mask1_beg = A1_beg ^ tweak0_beg;
 		mask2_beg = B0_beg ^ tweak1_beg;
 		mask3_beg = B1_beg ^ tweak1_beg;
-		
-		/*read AES output*/
-		key0 = changeEndian(key0_endian);
-		key1 = changeEndian(key1_endian);
-		key2 = changeEndian(key2_endian);
-		key3 = changeEndian(key3_endian);
 		
 		/*after AES*/
 	

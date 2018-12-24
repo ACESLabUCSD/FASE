@@ -11,7 +11,7 @@ module AES_128(
 );
 	
   logic		[127:0]	out_wire;  
-  assign out = changeEndian(out_wire);
+  assign out = out_wire;
   
   logic    		[127:0]     expandedKeyi[NR_AES:0];
   logic    		[127:0]     x1[NR_AES-1:0];
@@ -29,7 +29,7 @@ module AES_128(
   end
   endgenerate
 
-  AddRoundKey a(.x(changeEndian(state)), .y(expandedKeyi[0]), .z(x1[0]));
+  AddRoundKey a(.x(state), .y(expandedKeyi[0]), .z(x1[0]));
 
   generate 
   for(i=0;i<NR_AES;i=i+1)
