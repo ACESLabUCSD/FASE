@@ -4,12 +4,18 @@
 module tb_AES;
 
 	logic			clk, rst;
+	logic	[128*(NR_AES+1)-1:0] expandedKey;
 	logic	[127:0]	state, key;
 	logic	[127:0]	out;
+	
+	KeyExpansion e (
+		.key(changeEndian(key)), 
+		.expandedKey(expandedKey)
+	);
 	 
 	AES_128 uut(
 		.clk(clk), .rst(rst),
-		.key(key),
+		.expandedKey(expandedKey),
 		.state(state),
 		.out(out)
 	);

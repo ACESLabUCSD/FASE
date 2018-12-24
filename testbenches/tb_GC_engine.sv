@@ -19,6 +19,7 @@ module tb_GC_engine;
 	
 	logic			clk, rst;	
 	logic	[K-1:0]	R, AES_key;
+	logic	[128*(NR_AES+1)-1:0] AES_expandedKey;
 	logic	[S-1:0]	cid, gid;
 	logic	[3:0]	g_logic;
 	logic	[K-1:0]	in0_label, in1_label;
@@ -26,10 +27,16 @@ module tb_GC_engine;
 	logic	[K-1:0]	out_label_ref;
 	logic	[K-1:0]	t0, t1;
 	logic	[K-1:0]	t0_ref, t1_ref;
+	
+	KeyExpansion e (
+		.key(AES_key), 
+		.expandedKey(AES_expandedKey)
+	);
 
 	GC_engine #(.S(S), .K(K)) uut (  
 		.clk(clk), .rst(rst),
-		.R(R), .AES_key(AES_key),
+		.R(R),// .AES_key(AES_key),
+		.AES_expandedKey(AES_expandedKey),		
 		.cid(cid), .gid(gid),
 		.g_logic(g_logic),
 		.in0_label(in0_label), .in1_label(in1_label),
