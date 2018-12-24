@@ -4,7 +4,6 @@
 //AES 128 bit, ECB mode
 module AES_128(
 	input				clk, rst,
-	//input   	[127:0]	key,
 	/*in GC key is fixed for one netlist, so there is no pipeline for the keys, will not work in a generic setting where keys are regularly updated.*/
 	input		[128*(NR_AES+1)-1:0] expandedKey,
 	input		[127:0]	state,
@@ -14,7 +13,6 @@ module AES_128(
   logic		[127:0]	out_wire;  
   assign out = changeEndian(out_wire);
   
-  //logic    		[128*(NR_AES+1)-1:0] expandedKey;
   logic    		[127:0]     expandedKeyi[NR_AES:0];
   logic    		[127:0]     x1[NR_AES-1:0];
   logic    		[127:0]     x1_reg[NR_AES-1:0];
@@ -23,8 +21,6 @@ module AES_128(
   logic    		[127:0]     x4[NR_AES-2:0];
 
   genvar i;
-	
-  //KeyExpansion e (.key(changeEndian(key)), .expandedKey(expandedKey));
 
   generate 
   for(i=0;i<(NR_AES+1);i=i+1)

@@ -93,8 +93,7 @@ module GC_engine #(parameter S=20, K=128 )(
 	AES_128 AES_128_0(
 		.clk(clk), .rst(rst),
 		.state(changeEndian(mask0_beg)), 
-		.expandedKey(AES_expandedKey),
-		//.key(changeEndian(AES_key)), 
+		.expandedKey(AES_expandedKey), 
 		.out(key0_endian)
 	);
 
@@ -102,7 +101,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		.clk(clk), .rst(rst),
 		.state(changeEndian(mask1_beg)),
 		.expandedKey(AES_expandedKey), 
-		//.key(changeEndian(AES_key)), 
 		.out(key1_endian)
 	);
 
@@ -110,7 +108,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		.clk(clk), .rst(rst),
 		.state(changeEndian(mask2_beg)),
 		.expandedKey(AES_expandedKey), 
-		//.key(changeEndian(AES_key)), 
 		.out(key2_endian)
 	);
 
@@ -118,7 +115,6 @@ module GC_engine #(parameter S=20, K=128 )(
 		.clk(clk), .rst(rst),
 		.state(changeEndian(mask3_beg)), 
 		.expandedKey(AES_expandedKey),
-		//.key(changeEndian(AES_key)), 
 		.out(key3_endian)
 	);
 	
