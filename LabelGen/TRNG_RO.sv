@@ -4,7 +4,7 @@
 module TRNG_RO #(parameter n = 3, N_RO = 32, logN = 5)( // n- no of inverters in one ring, N_RO- no of rings
     input wire clk,
     input wire rst,
-    output wire rand
+    output wire out
     );
 	 
 (* OPTIMIZE = "OFF" *)
@@ -23,16 +23,16 @@ begin: Ring
 end
 endgenerate
 
-wire randD;
+wire outD;
 XOR_tree #(N_RO, logN ) XOR_tree1(
     .in(R),
-    .out(randD)
+    .out(outD)
     );
 	 
 FD Capture (
-	.Q (rand),
+	.Q (out),
 	.C (clk),
-	.D (randD));
+	.D (outD));
 
 
 endmodule
