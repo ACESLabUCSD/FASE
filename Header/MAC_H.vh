@@ -66,11 +66,12 @@ endfunction
 
 parameter NR_AES = 10; //no of pipeline stages in AES = no of AES rounds
 parameter K = 128; //security parameter, bit-length of keys
-parameter S = 5; //width of gate id (or wire id), maximum number of gates = 2^S
+parameter S = 14; //width of gate id (or wire id), maximum number of gates = 2^S
 
 
 /*simulation files*/	
 parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/all_logic/";
+parameter NETLISTFILE = "Netlist.txt";
 parameter KEYFILE = "Keys.txt";
 parameter LABELFILE = "Labels.txt";
 parameter IN0FILE = "In0.txt";

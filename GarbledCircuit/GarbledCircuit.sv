@@ -54,17 +54,22 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*load the netlist*/
 	
-	logic	[S-1:0]	input_size;
+	logic			done_Netlist;
+	logic	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size;
 	logic			in0F, in1F;
 	logic	[S-1:0]	in0, in1;
+	logic			is_output;
 	
 	Netlist #(.S(S)) Netlist(
+		.clk(clk), .rst(rst), .start(start),
 		.gid(gid),
-		.input_size(input_size),
+		.done(done_Netlist),
+		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), .output_size(output_size), .gate_size(gate_size),
 		.in0F(in0F), .in1F(in1F),
 		.in0(in0), .in1(in1),
-		.g_logic(g_logic)
-	);
+		.g_logic(g_logic),
+		.is_output(is_output)
+);
 	
 	/*FIFOs for output labels and garbled tables*/
 	
@@ -154,6 +159,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	logic			is_XOR, is_XNOR;
 	logic	[K-1:0]	XOR_label;
+	logic	[S-1:0]	num_XOR;
 		
 	always_comb begin	
 		is_XOR = ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE))? 'b1 : 'b0;
@@ -197,7 +203,6 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	end
 	
 	/*garble the netlist*/
-	logic	[S-1:0]	num_XOR;
 	logic	gid_inc;
 	always_ff @(posedge clk or posedge rst)
 		if(rst) begin 
@@ -213,6 +218,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		IDLE,
 		GETKEYS,
 		CONSTLABELS,
+		WAIT,
 		GARBLE
 	}state;
 	
@@ -225,6 +231,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	always_comb begin
 		en_LabelGen = 'b0;
 		gid_inc = 'b0;
+		IL_wr_en_0 = 'b0;
+		IL_wr_en_1 = 'b0;
 		OL_GT_wr_en_beg = 'b0;	
 		nextState = currState;
 		case(currState)
@@ -232,8 +240,6 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				cid = 'd0;			
 				R = 'b0; 
 				AES_key = 'b0; 
-				IL_wr_en_0 = 'b0;
-				IL_wr_en_1 = 'b0;
 				in0_label = 'b0;
 				in1_label = 'b0;
 				if(start == 'b1) nextState = GETKEYS;
@@ -255,7 +261,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				
 				in0_label = key[K-1:0];
 				in1_label = key[2*K-1:K];
-				nextState = GARBLE;
+				if(done_Netlist) nextState = GARBLE;
+				else nextState = WAIT;
+			end		
+			WAIT: begin
+				if(done_Netlist) nextState = GARBLE;
 			end		
 			GARBLE: begin
 				en_LabelGen = {(in1F & ~ILF_rd_data_1), (in0F & ~ILF_rd_data_0)};
