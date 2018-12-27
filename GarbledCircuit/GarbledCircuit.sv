@@ -15,7 +15,7 @@
 `include "../Header/MAC_H.vh"
 
 module GarbledCircuit #(parameter S = 20, K = 128)(	
-	input	clk, rst, start
+	input			clk, rst, start
 );
 	/*generate keys*/
 	logic	[1:0]		en_LabelGen;
@@ -27,11 +27,31 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.key(key)
     );
 	
-	/*garble a gate*/
-	logic	[K-1:0]	R, AES_key;
-	logic	[128*(NR_AES+1)-1:0] AES_expandedKey;
+	/*load the netlist*/
+	
 	logic	[S-1:0]	cid, gid;
 	logic	[3:0]	g_logic;
+	logic					done_Netlist;
+	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size;
+	logic					in0F, in1F;
+	logic	signed	[S-1:0]	in0, in1;
+	logic					is_output;
+	
+	Netlist #(.S(S)) Netlist(
+		.clk(clk), .rst(rst), .start(start),
+		.gid(gid),
+		.done(done_Netlist),
+		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), .output_size(output_size), .gate_size(gate_size),
+		.in0F(in0F), .in1F(in1F),
+		.in0(in0), .in1(in1),
+		.g_logic(g_logic),
+		.is_output(is_output)
+	);
+	
+	/*garble a gate*/
+	
+	logic	[K-1:0]	R, AES_key;
+	logic	[128*(NR_AES+1)-1:0] AES_expandedKey;
 	logic	[K-1:0]	in0_label, in1_label;
 	logic	[K-1:0]	t0, t1;
 	logic	[K-1:0]	out_label;
@@ -52,24 +72,17 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.out_label(out_label)
 	);
 	
-	/*load the netlist*/
+	/*XORs*/
 	
-	logic			done_Netlist;
-	logic	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size;
-	logic			in0F, in1F;
-	logic	[S-1:0]	in0, in1;
-	logic			is_output;
-	
-	Netlist #(.S(S)) Netlist(
-		.clk(clk), .rst(rst), .start(start),
-		.gid(gid),
-		.done(done_Netlist),
-		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), .output_size(output_size), .gate_size(gate_size),
-		.in0F(in0F), .in1F(in1F),
-		.in0(in0), .in1(in1),
-		.g_logic(g_logic),
-		.is_output(is_output)
-);
+	logic			is_XOR, is_XNOR;
+	logic	[K-1:0]	XOR_label;
+	logic	[S-1:0]	num_XOR;
+		
+	always_comb begin	
+		is_XOR = ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE))? 'b1 : 'b0;
+		is_XNOR = (g_logic == XNORGATE)? 'b1 : 'b0;
+		XOR_label = is_XNOR? in0_label^in1_label^R : in0_label^in1_label;
+	end
 	
 	/*FIFOs for output labels and garbled tables*/
 	
@@ -142,6 +155,21 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.rd_data_0(OL_rd_data_0), .rd_data_1(OL_rd_data_1)
 	);
 	
+	logic				OLF_wr_en_0, OLF_wr_en_1;
+	logic	[S-1:0]		OLF_wr_addr_0, OLF_wr_addr_1;
+	logic	[S-1:0]		OLF_rd_addr_0, OLF_rd_addr_1;  
+	logic	[K-1:0]		OLF_wr_data_0, OLF_wr_data_1; 
+	logic	[K-1:0]		OLF_rd_data_0, OLF_rd_data_1;
+	
+	DPRAM #(.S(S), .K(1)) OutLabelsFlag(
+		.clk(clk), .rst(rst),
+		.wr_en_0(OLF_wr_en_0), .wr_en_1(OLF_wr_en_1),
+		.wr_addr_0(OLF_wr_addr_0), .wr_addr_1(OLF_wr_addr_1),
+		.rd_addr_0(OLF_rd_addr_0), .rd_addr_1(OLF_rd_addr_1),  
+		.wr_data_0(OLF_wr_data_0), .wr_data_1(OLF_wr_data_1), 
+		.rd_data_0(OLF_rd_data_0), .rd_data_1(OLF_rd_data_1)
+	);
+	
 	logic				GT_wr_en_0, GT_wr_en_1;
 	logic	[S-1:0]		GT_wr_addr_0, GT_wr_addr_1;
 	logic	[S-1:0]		GT_rd_addr_0, GT_rd_addr_1;  
@@ -156,16 +184,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.wr_data_0(GT_wr_data_0), .wr_data_1(GT_wr_data_1), 
 		.rd_data_0(GT_rd_data_0), .rd_data_1(GT_rd_data_1)
 	);	
-	
-	logic			is_XOR, is_XNOR;
-	logic	[K-1:0]	XOR_label;
-	logic	[S-1:0]	num_XOR;
 		
-	always_comb begin	
-		is_XOR = ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE))? 'b1 : 'b0;
-		is_XNOR = (g_logic == XNORGATE)? 'b1 : 'b0;
-		XOR_label = is_XNOR? in0_label^in1_label^R : in0_label^in1_label;
-		
+	always_comb begin			
 		OL_wr_addr_beg = gid;
 		GT_wr_addr_beg = gid - num_XOR;
 	
@@ -178,8 +198,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		ILF_wr_en_1 = IL_wr_en_1; 
 		ILF_wr_addr_0 = IL_wr_addr_0;
 		ILF_wr_addr_1 = IL_wr_addr_1; 
-		ILF_rd_addr_0 = in0+'d2;
-		ILF_rd_addr_1 = in1+'d2;
+		ILF_rd_addr_0 = IL_rd_addr_0;
+		ILF_rd_addr_1 = IL_rd_addr_1;
 		ILF_wr_data_0 = 'b1;
 		ILF_wr_data_1 = 'b1;
 
@@ -190,7 +210,16 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		OL_rd_addr_0 = in0-input_size;
 		OL_rd_addr_1 = in1-input_size;  
 		OL_wr_data_0 = out_label;
-		OL_wr_data_1 = XOR_label; 
+		OL_wr_data_1 = XOR_label;
+
+		OLF_wr_en_0 = OL_wr_en_0;
+		OLF_wr_en_1 = OL_wr_en_1;
+		OLF_wr_addr_0 = OL_wr_addr_0;
+		OLF_wr_addr_1 = OL_wr_addr_1;
+		OLF_rd_addr_0 = OL_rd_addr_0;
+		OLF_rd_addr_1 = OL_rd_addr_1;  
+		OLF_wr_data_0 = 'b1;
+		OLF_wr_data_1 = 'b1; 
 
 		GT_wr_en_0 = OL_GT_wr_en_end;
 		GT_wr_en_1 = OL_GT_wr_en_end;
@@ -203,6 +232,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	end
 	
 	/*garble the netlist*/
+	
 	logic	gid_inc;
 	always_ff @(posedge clk or posedge rst)
 		if(rst) begin 
@@ -210,8 +240,10 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 			num_XOR <= 'd0;
 		end
 		else begin 
-			if(gid_inc) gid <= gid + 'd1;
-			if(is_XOR) num_XOR <= num_XOR + 'd1;
+			if(gid_inc) begin
+				gid <= gid + 'd1;
+				if(is_XOR) num_XOR <= num_XOR + 'd1;
+			end
 		end
 	
 	typedef enum{
@@ -233,8 +265,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		gid_inc = 'b0;
 		IL_wr_en_0 = 'b0;
 		IL_wr_en_1 = 'b0;
+		IL_wr_addr_0 = {S{1'b1}};
+		IL_wr_addr_1 = {S{1'b1}};
 		OL_GT_wr_en_beg = 'b0;	
 		nextState = currState;
+		
 		case(currState)
 			IDLE: begin
 				cid = 'd0;			
@@ -252,7 +287,6 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 			end				
 			CONSTLABELS: begin
 				en_LabelGen = 'b11;
-				gid_inc = 'b1; //gid starts from -1, starting the counter here so that from the beginning of the next state gid is 0
 				
 				IL_wr_en_0 = 'b1;
 				IL_wr_en_1 = 'b1; 
@@ -261,20 +295,22 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				
 				in0_label = key[K-1:0];
 				in1_label = key[2*K-1:K];
+				
+				gid_inc = 'b1; //gid starts from -1, starting the counter here so that from the beginning of the next state gid is 0
+				
 				if(done_Netlist) nextState = GARBLE;
 				else nextState = WAIT;
 			end		
 			WAIT: begin
 				if(done_Netlist) nextState = GARBLE;
 			end		
-			GARBLE: begin
-				en_LabelGen = {(in1F & ~ILF_rd_data_1), (in0F & ~ILF_rd_data_0)};
-				gid_inc = 'b1;
-				
+			GARBLE: begin				
 				IL_wr_en_0 = in0F & ~ILF_rd_data_0;
 				IL_wr_en_1 = in1F & ~ILF_rd_data_1; 
 				IL_wr_addr_0 = in0+'d2;
 				IL_wr_addr_1 = in1+'d2; 
+				
+				en_LabelGen = {IL_wr_en_1, IL_wr_en_0};
 				
 				if(in0F) begin
 					if(ILF_rd_data_0) in0_label = IL_rd_data_0;
@@ -282,14 +318,16 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				end
 				else in0_label = OL_rd_data_0;
 				
-				if(in1 == {S{1'b1}}) in1_label = R; 
+				if(in1 == -1) in1_label = R; 
 				else if(in1F) begin
 					if(ILF_rd_data_1) in1_label = IL_rd_data_1;
 					else in1_label = key[2*K-1:K];
 				end
 				else in1_label = OL_rd_data_1;	
 				
-				OL_GT_wr_en_beg = ~is_XOR;				
+				OL_GT_wr_en_beg = ~is_XOR;	
+				
+				gid_inc = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);			
 			end
 		endcase
 	end

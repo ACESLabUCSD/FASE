@@ -1,14 +1,14 @@
 `include "../Header/MAC_H.vh"
 
 module Netlist #(parameter S = 20)(
-	input						clk, rst, start,
-	input			[S-1:0]		gid,
-	output	logic				done,
-	output	logic	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size,
-	output						in0F, in1F, //1 if they are inputs of the circuit
-	output	logic	[S-1:0]		in0, in1,
-	output	logic	[3:0]		g_logic,
-	output	logic				is_output //1 if gate output is output of the circuit
+	input								clk, rst, start,
+	input					[S-1:0]		gid,
+	output	logic						done,
+	output	logic	signed	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size,
+	output								in0F, in1F, //1 if they are inputs of the circuit
+	output	logic	signed	[S-1:0]		in0, in1,
+	output	logic			[3:0]		g_logic,
+	output	logic						is_output //1 if gate output is output of the circuit
 );
 
 	logic	[31:0]	Netlist [0:2**S-1]; 		
@@ -69,7 +69,7 @@ module Netlist #(parameter S = 20)(
 			end				
 			GATE: begin
 				index = 'd3;
-				gate_size = line[2*S-1:S];
+				gate_size = line[S-1:0];
 				done = 'b1;
 				nextState = GARBLE;
 			end				
@@ -84,7 +84,7 @@ module Netlist #(parameter S = 20)(
 		endcase
 	end
 	
-	assign in0F = ((in0 < input_size) && (in0 >= 0))? 'b1 : 'b0;
-	assign in1F = ((in1 < input_size) && (in1 >= 0))? 'b1 : 'b0;
+	assign in0F = (in0 < input_size)? 'b1 : 'b0;
+	assign in1F = (in1 < input_size)? 'b1 : 'b0;
 	
 endmodule
