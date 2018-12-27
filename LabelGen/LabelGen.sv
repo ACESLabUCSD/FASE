@@ -33,8 +33,9 @@ endmodule
 
 `else
 module LabelGen #(parameter S = 20, K = 128)(
-    input wire clk, rst, en,
-    output [2*K-1:0] key
+    input 				clk, rst,
+    input 	[1:0]		en,
+    output	[2*K-1:0]	key
     );
 	
 	localparam SIZE = S+1; //2 keys per gate
@@ -45,14 +46,13 @@ module LabelGen #(parameter S = 20, K = 128)(
 	end
 	
 	logic	[SIZE-1:0] index, index_;
-	
-	assign key = {RAND[index+'d1], RAND[index]};
-	assign index_ = index + 'd2;
-	
+	assign index_ = index + en[0] + en[1];	
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst)	index <= 'd0;
-		else if(en)  index <= index_;
+		else index <= index_;
 	end
+	
+	assign key = {RAND[index+'d1]&{K{en[1]}}, RAND[index]&{K{en[0]}}};
 endmodule
 
 `endif

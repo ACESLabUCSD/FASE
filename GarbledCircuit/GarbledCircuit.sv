@@ -18,7 +18,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	input	clk, rst, start
 );
 	/*generate keys*/
-	logic	en_LabelGen;
+	logic	[1:0]		en_LabelGen;
 	logic	[2*K-1:0]	key;
 	
 	LabelGen #(.S(S), .K(K))LabelGen(
@@ -69,7 +69,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	/*FIFOs for output labels and garbled tables*/
 	
 	logic			OL_GT_wr_en_beg, OL_GT_wr_en_end;
-	logic	[S-1:0]	OL_GT_wr_addr_beg, OL_GT_wr_addr_end;
+	logic	[S-1:0]	OL_wr_addr_beg, OL_wr_addr_end;
+	logic	[S-1:0]	GT_wr_addr_beg, GT_wr_addr_end;
 	
 	FIFO #(.N(1), .S(NR_AES)) FIFO_OL_GT_wr_en_0(	
 		.clk(clk), .rst(rst),
@@ -77,10 +78,16 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.out(OL_GT_wr_en_end)
 	);	
 	
-	FIFO #(.N(S), .S(NR_AES)) OL_GT_wr_addr(	
+	FIFO #(.N(S), .S(NR_AES)) OL_wr_addr(	
 		.clk(clk), .rst(rst),
-		.in(OL_GT_wr_addr_beg),
-		.out(OL_GT_wr_addr_end)
+		.in(OL_wr_addr_beg),
+		.out(OL_wr_addr_end)
+	);	
+	
+	FIFO #(.N(S), .S(NR_AES)) GT_wr_addr(	
+		.clk(clk), .rst(rst),
+		.in(GT_wr_addr_beg),
+		.out(GT_wr_addr_end)
 	);
 	
 	/*memories for input labels, output labels, and garbled tables*/
@@ -144,9 +151,17 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.wr_data_0(GT_wr_data_0), .wr_data_1(GT_wr_data_1), 
 		.rd_data_0(GT_rd_data_0), .rd_data_1(GT_rd_data_1)
 	);	
+	
+	logic			is_XOR, is_XNOR;
+	logic	[K-1:0]	XOR_label;
 		
 	always_comb begin	
-		OL_GT_wr_addr_beg = gid;
+		is_XOR = ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE))? 'b1 : 'b0;
+		is_XNOR = (g_logic == XNORGATE)? 'b1 : 'b0;
+		XOR_label = is_XNOR? in0_label^in1_label^R : in0_label^in1_label;
+		
+		OL_wr_addr_beg = gid;
+		GT_wr_addr_beg = gid - num_XOR;
 	
 		IL_rd_addr_0 = in0+'d2;//first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
@@ -163,18 +178,18 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		ILF_wr_data_1 = 'b1;
 
 		OL_wr_en_0 = OL_GT_wr_en_end;
-		OL_wr_en_1 = 'b0;
-		OL_wr_addr_0 = OL_GT_wr_addr_end;
-		OL_wr_addr_1 = 'b0;
+		OL_wr_en_1 = is_XOR;
+		OL_wr_addr_0 = OL_wr_addr_end;
+		OL_wr_addr_1 = gid;
 		OL_rd_addr_0 = in0-input_size;
 		OL_rd_addr_1 = in1-input_size;  
 		OL_wr_data_0 = out_label;
-		OL_wr_data_1 = 'b0; 
+		OL_wr_data_1 = XOR_label; 
 
 		GT_wr_en_0 = OL_GT_wr_en_end;
 		GT_wr_en_1 = OL_GT_wr_en_end;
-		GT_wr_addr_0 = 2*OL_GT_wr_addr_end;
-		GT_wr_addr_1 = 2*OL_GT_wr_addr_end+'d1;
+		GT_wr_addr_0 = 2*GT_wr_addr_end;
+		GT_wr_addr_1 = 2*GT_wr_addr_end+'d1;
 		GT_rd_addr_0 = 'b0;
 		GT_rd_addr_1 = 'b0;  
 		GT_wr_data_0 = t0;
@@ -182,10 +197,17 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	end
 	
 	/*garble the netlist*/
+	logic	[S-1:0]	num_XOR;
 	logic	gid_inc;
 	always_ff @(posedge clk or posedge rst)
-		if(rst) gid <= -'d1;
-		else if(gid_inc) gid <= gid + 'd1;;
+		if(rst) begin 
+			gid <= -'d1;
+			num_XOR <= 'd0;
+		end
+		else begin 
+			if(gid_inc) gid <= gid + 'd1;
+			if(is_XOR) num_XOR <= num_XOR + 'd1;
+		end
 	
 	typedef enum{
 		IDLE,
@@ -217,13 +239,13 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				if(start == 'b1) nextState = GETKEYS;
 			end
 			GETKEYS: begin
-				en_LabelGen = 'b1;
+				en_LabelGen = 'b11;
 				R = key[K-1:0];
 				AES_key = key[2*K-1:K];
 				nextState = CONSTLABELS;
 			end				
 			CONSTLABELS: begin
-				en_LabelGen = 'b1;
+				en_LabelGen = 'b11;
 				gid_inc = 'b1; //gid starts from -1, starting the counter here so that from the beginning of the next state gid is 0
 				
 				IL_wr_en_0 = 'b1;
@@ -236,11 +258,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				nextState = GARBLE;
 			end		
 			GARBLE: begin
-				en_LabelGen = (in0F & ~ILF_rd_data_0)|(in1F & ~ILF_rd_data_1);
+				en_LabelGen = {(in1F & ~ILF_rd_data_1), (in0F & ~ILF_rd_data_0)};
 				gid_inc = 'b1;
 				
 				IL_wr_en_0 = in0F & ~ILF_rd_data_0;
-				IL_wr_en_1 = in1F & ~ILF_rd_data_0; 
+				IL_wr_en_1 = in1F & ~ILF_rd_data_1; 
 				IL_wr_addr_0 = in0+'d2;
 				IL_wr_addr_1 = in1+'d2; 
 				
@@ -249,13 +271,15 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 					else in0_label = key[K-1:0];
 				end
 				else in0_label = OL_rd_data_0;
-				if(in1F) begin
+				
+				if(in1 == {S{1'b1}}) in1_label = R; 
+				else if(in1F) begin
 					if(ILF_rd_data_1) in1_label = IL_rd_data_1;
 					else in1_label = key[2*K-1:K];
 				end
 				else in1_label = OL_rd_data_1;	
 				
-				OL_GT_wr_en_beg = 'b1;				
+				OL_GT_wr_en_beg = ~is_XOR;				
 			end
 		endcase
 	end

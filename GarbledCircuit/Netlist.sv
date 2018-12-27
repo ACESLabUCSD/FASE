@@ -18,11 +18,11 @@ module Netlist #(parameter S = 20)(
 		$readmemh({LOC, LOGICFILE}, G_LOGICS);
 	end
 	
-	assign input_size = 'd16;
+	assign input_size = 'd22;
 	assign in0 = IN0[gid];
 	assign in1 = IN1[gid];
-	assign in0F = (in0 < input_size)? 'b1 : 'b0;
-	assign in1F = (in1 < input_size)? 'b1 : 'b0;
+	assign in0F = ((in0 < input_size) && (in0 >= 0))? 'b1 : 'b0;
+	assign in1F = ((in1 < input_size) && (in1 >= 0))? 'b1 : 'b0;
 	assign g_logic = G_LOGICS[gid];
 	
 endmodule

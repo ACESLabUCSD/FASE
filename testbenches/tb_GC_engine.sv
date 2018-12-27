@@ -14,8 +14,6 @@
 `include "../Header/MAC_H.vh"
 
 module tb_GC_engine;
-
-	localparam S=20, L=32, K=128;
 	
 	logic			clk, rst;	
 	logic	[K-1:0]	R, AES_key;
@@ -44,17 +42,20 @@ module tb_GC_engine;
 		.out_label(out_label)
 	);	
 	
+	parameter num_gates = 11;
+	
 	logic	[K-1:0]	KEYS [0:1];
-	logic	[3:0]	IN0 [0:7]; 
-	logic	[3:0]	IN1 [0:7]; 
-	logic	[3:0]	G_LOGICS [0:7]; 
-	logic	[K-1:0]	IN_LABELS [0:17]; 
-	logic	[K-1:0]	T_REF [0:15];
-	logic	[K-1:0]	OUT_LABELS_REF [0:15];
+	logic	[S-1:0]	IN0 [0:num_gates-1]; 
+	logic	[S-1:0]	IN1 [0:num_gates-1]; 
+	logic	[3:0]	G_LOGICS [0:num_gates-1]; 
+	logic	[K-1:0]	IN_LABELS [0:2*num_gates+1]; 
+	logic	[K-1:0]	T_REF [0:2*num_gates-1];
+	logic	[K-1:0]	OUT_LABELS_REF [0:2*num_gates-1];
 	
-	logic	[L-1:0]	in0, in1;
+	logic	[S-1:0]	in0, in1;
 	
-	integer k, l;
+	integer k, l, m, x;
+	integer X[num_gates];
 
 	always #50 clk = ~clk;
 		
@@ -80,25 +81,33 @@ module tb_GC_engine;
 		
 		#100;
 		rst = 'b0;
-			
-		for (l = 0; l < NR_AES+9; l = l+1) begin	
+		
+		x = 0;		
+		for (l = 0; l < NR_AES+12; l = l+1) begin	
 			@(posedge clk);	
-			if(l < 8) begin
+			if(l < num_gates) begin
 				gid = l;	
 				in0 = IN0[l] + 2; //The first two labels from the Labels file are assigned to constants
 				in1 = IN1[l] + 2;
 				g_logic = G_LOGICS[l];
 				in0_label = IN_LABELS[in0];
 				in1_label = IN_LABELS[in1];	
+				if ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE)) x = x + 1;
+				X[l] = x;
 			end
 			if(l > NR_AES) begin
-				t0_ref = T_REF[2*(l-NR_AES-1)];
-				t1_ref = T_REF[2*(l-NR_AES-1)+1];	
-				out_label_ref = OUT_LABELS_REF[2*(l-NR_AES-1)];
+				m = l-NR_AES-1;
+				t0_ref = T_REF[2*(m-X[m])];
+				t1_ref = T_REF[2*(m-X[m])+1];	
+				out_label_ref = OUT_LABELS_REF[2*(m)];
 				
-				$display("%d\nout_label = %x \nt0 = %x \nt1 = %x", l-NR_AES-1, out_label, t0, t1);
-				assert((out_label == out_label_ref) && (t0 == t0_ref) && (t1 == t1_ref)) $display("Pass");
-				else $error("Correct Values: \nout_label = %x \nt0 = %x \nt1 = %x", out_label_ref, t0_ref, t1_ref);	
+				$display("\ngate id = %d\nout_label = %x \nt0 = %x \nt1 = %x", m, out_label, t0, t1);				
+				g_logic = G_LOGICS[m];
+				if ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE)) $display("XOR gate");
+				else begin
+					assert((out_label == out_label_ref) && (t0 == t0_ref) && (t1 == t1_ref)) $display("Pass");
+					else $error("Correct Values: \nout_label = %x \nt0 = %x \nt1 = %x", out_label_ref, t0_ref, t1_ref);	
+				end
 			end
 		end		
 		
