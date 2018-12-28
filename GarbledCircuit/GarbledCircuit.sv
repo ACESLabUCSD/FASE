@@ -29,8 +29,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*load the netlist*/
 	
-	logic	[S-1:0]	cid, gid;
-	logic	[3:0]	g_logic;
+	logic			[S-1:0]	cid, gid;
+	logic			[3:0]	g_logic;
 	logic					done_Netlist;
 	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size;
 	logic					in0F, in1F;
@@ -90,7 +90,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-1:0]	OL_wr_addr_beg, OL_wr_addr_end;
 	logic	[S-1:0]	GT_wr_addr_beg, GT_wr_addr_end;
 	
-	FIFO #(.N(1), .S(NR_AES)) FIFO_OL_GT_wr_en_0(	
+	FIFO #(.N(1), .S(NR_AES)) OL_GT_wr_en_0(	
 		.clk(clk), .rst(rst),
 		.in(OL_GT_wr_en_beg),
 		.out(OL_GT_wr_en_end)
@@ -231,20 +231,50 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		GT_wr_data_1 = t1; 		
 	end
 	
+	/*store output masks*/
+	
+	logic	[0:2**S-1]	OutputMask;
+	logic 				GC_mask;
+	logic				OM_inc_beg, OM_inc_end, XOR_mask_beg, XOR_mask_end, is_XOR_end;
+	logic	[3:0]		OM_beg, OM_end;
+	logic	[S-1:0]		OM_index;
+	
+	FIFO #(.N(3), .S(NR_AES)) OM(	
+		.clk(clk), .rst(rst),
+		.in(OM_beg),
+		.out(OM_end)
+	);	
+	
+	always_comb begin
+		GC_mask = out_label[0];
+		XOR_mask_beg = XOR_label[0];
+		OM_inc_beg = is_output & gid_inc;
+		OM_beg = {XOR_mask_beg, is_XOR, OM_inc_beg};
+		{XOR_mask_end, is_XOR_end, OM_inc_end} = OM_end;
+		
+		if(OM_inc_end) begin
+			if(is_XOR_end) OutputMask[OM_index] = XOR_mask_end;
+			else OutputMask[OM_index] = GC_mask;
+		end		
+	end
+	
 	/*garble the netlist*/
 	
 	logic	gid_inc;
-	always_ff @(posedge clk or posedge rst)
+	always_ff @(posedge clk or posedge rst) begin
 		if(rst) begin 
 			gid <= -'d1;
 			num_XOR <= 'd0;
+			OM_index <= 'd0;
 		end
 		else begin 
 			if(gid_inc) begin
 				gid <= gid + 'd1;
 				if(is_XOR) num_XOR <= num_XOR + 'd1;
 			end
+			if(OM_inc_end) OM_index <= OM_index + 'd1;
 		end
+	end
 	
 	typedef enum{
 		IDLE,
