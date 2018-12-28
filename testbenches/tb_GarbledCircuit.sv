@@ -35,8 +35,14 @@ module tb_GarbledCircuit;
 	logic	[K-1:0]	OutputMask ;
 	
 	always #50 clk = ~clk;
+	
+	integer k, f_IL, f_K, f_GT;
 		
-	initial begin		
+	initial begin	
+		f_IL = $fopen({LOC, LABELFILE},"w");
+		f_K = $fopen({LOC, KEYFILE},"w");
+		f_GT = $fopen({LOC, TABLEFILE},"w");
+		
 		clk = 'b0;
 		rst = 'b1;	
 		start = 'b0;	
@@ -62,11 +68,23 @@ module tb_GarbledCircuit;
 					GarbledTables[index1] = data1;				
 				end
 				else if(tag[1:0] == 2'b11) begin
-					OutputMask = data0;		
+					OutputMask = data0;	
+		
+					for (k = 0; k < 21; k = k+1)
+						$fwrite(f_IL,"%H\n", InLabels[k]);
+					for (k = 0; k < 8; k = k+1) begin
+						$fwrite(f_GT,"%H\n", GarbledTables[2*k]);
+						$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
+					end
+						
+					$fclose(f_IL);
+					$fclose(f_K);
+					$fclose(f_GT);
 					$stop();
+					//break;
 				end
 			end
-		end
+		end		
 	end
 
 endmodule
