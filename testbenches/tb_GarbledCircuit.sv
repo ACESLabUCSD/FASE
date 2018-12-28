@@ -18,11 +18,22 @@
 module tb_GarbledCircuit;
 	
 	logic			clk, rst, start;	
+	logic	[2:0]	tag;
+	logic	[S-1:0]	index0, index1; 
+	logic	[K-1:0]	data0, data1;	
 	
 	GarbledCircuit  #(.S(S), .K(K)) uut (  
-		.clk(clk), .rst(rst), .start(start)
-	);
-
+		.clk(clk), .rst(rst), .start(start),
+		.tag(tag),
+		.index0(index0), .index1(index1), 
+        .data0(data0), .data1(data1)
+	);	
+	
+	logic	[K-1:0]	Keys [0:1];
+	logic	[K-1:0]	InLabels [0:2**S-1];
+	logic	[K-1:0]	GarbledTables [0:2**S-1];
+	logic	[K-1:0]	OutputMask ;
+	
 	always #50 clk = ~clk;
 		
 	initial begin		
@@ -35,6 +46,27 @@ module tb_GarbledCircuit;
 		start = 'b1;
 		#100;		
 		start = 'b0;
+		while(1) begin
+			@(posedge clk);
+			if(tag[2]) begin
+				if(tag[0]) InLabels[index0] = data0;
+				if(tag[1]) InLabels[index1] = data1;
+			end
+			else begin
+				if(tag[1:0] == 2'b01) begin
+					Keys[0] = data0;
+					Keys[1] = data1;					
+				end
+				else if(tag[1:0] == 2'b10) begin
+					GarbledTables[index0] = data0;
+					GarbledTables[index1] = data1;				
+				end
+				else if(tag[1:0] == 2'b11) begin
+					OutputMask = data0;		
+					$stop();
+				end
+			end
+		end
 	end
 
 endmodule

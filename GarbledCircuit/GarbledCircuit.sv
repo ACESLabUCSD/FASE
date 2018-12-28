@@ -15,9 +15,13 @@
 `include "../Header/MAC_H.vh"
 
 module GarbledCircuit #(parameter S = 20, K = 128)(	
-	input			clk, rst, start
+	input			clk, rst, start,
+	output	logic	[2:0]	tag,
+	output	logic	[S-1:0]	index0, index1, 
+	output	logic	[K-1:0]	data0, data1	
 );
 	/*generate keys*/
+	
 	logic	[1:0]		en_LabelGen;
 	logic	[2*K-1:0]	key;
 	
@@ -107,6 +111,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.in(GT_wr_addr_beg),
 		.out(GT_wr_addr_end)
 	);
+	
+	/*used later for transferring garbled tables*/
+	
+	logic	[S-1:0]	GT_rd_index;
+	logic			GT_rd_inc;
 	
 	/*memories for input labels, output labels, and garbled tables*/
 	
@@ -225,8 +234,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		GT_wr_en_1 = OL_GT_wr_en_end;
 		GT_wr_addr_0 = 2*GT_wr_addr_end;
 		GT_wr_addr_1 = 2*GT_wr_addr_end+'d1;
-		GT_rd_addr_0 = 'b0;
-		GT_rd_addr_1 = 'b0;  
+		GT_rd_addr_0 = 2*GT_rd_index;
+		GT_rd_addr_1 = 2*GT_rd_index+'d1;  
 		GT_wr_data_0 = t0;
 		GT_wr_data_1 = t1; 		
 	end
@@ -258,14 +267,14 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		end		
 	end
 	
-	/*garble the netlist*/
+	/*counters*/
 	
-	logic	gid_inc;
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst) begin 
 			gid <= -'d1;
 			num_XOR <= 'd0;
 			OM_index <= 'd0;
+			GT_rd_index <= 'd0;
 		end
 		else begin 
 			if(gid_inc) begin
@@ -273,18 +282,23 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				if(is_XOR) num_XOR <= num_XOR + 'd1;
 			end
 			if(OM_inc_end) OM_index <= OM_index + 'd1;
+			if(GT_rd_inc) GT_rd_index <= GT_rd_index + 'd1;
 		end
 	end
+	
+	/*garble the netlist*/
 	
 	typedef enum{
 		IDLE,
 		GETKEYS,
 		CONSTLABELS,
 		WAIT,
-		GARBLE
+		GARBLE,
+		MASKS
 	}state;
 	
-	state currState, nextState;
+	state currState, nextState;	
+	logic	gid_inc;
 	
 	always_ff @(posedge clk or posedge rst)
 		if(rst) currState <= IDLE;
@@ -357,7 +371,64 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				
 				OL_GT_wr_en_beg = ~is_XOR;	
 				
-				gid_inc = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);			
+				gid_inc = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);	
+
+				if((gid == gate_size)&&(GT_rd_index == gate_size-num_XOR)) nextState = MASKS;
+			end
+		endcase
+	end
+	
+	/*send data, part of the same state machine, written separately to keep it clean*/	
+	/*
+	tag 
+	000: nothing
+	101: input 0	110: input 1		111: input 0 and 1
+	001: keys		010: garbled table	011: masks
+	*/
+	
+	always_comb begin
+		tag = 'b000;
+		index0 = -1;
+		index1 = -1;
+		GT_rd_inc = 'b0;
+		case(currState)
+			GETKEYS: begin
+				tag = 'b001;
+				data0 = R;
+				data1 = AES_key;
+			end				
+			CONSTLABELS: begin
+				tag = 'b111;
+				index0 = IL_wr_addr_0;
+				index1 = IL_wr_addr_1;
+				data0 = in0_label;
+				data1 = in1_label;
+			end		
+			WAIT: begin
+			end		
+			GARBLE: begin
+				if(|en_LabelGen) begin
+					tag = {1'b1, en_LabelGen};
+					index0 = IL_wr_addr_0;
+					index1 = IL_wr_addr_1;	
+					data0 = in0_label;
+					data1 = in1_label;					
+				end
+				else begin
+					if(GT_rd_index < GT_wr_addr_end) begin
+						tag = 3'b010;
+						GT_rd_inc = 'b1;
+						index0 = 2*GT_rd_index;
+						index1 = 2*GT_rd_index+'d1;
+						data0 = GT_rd_data_0;
+						data1 = GT_rd_data_1;
+					end
+				end
+			end
+			MASKS: begin
+				tag = 3'b011;
+				data0 = OutputMask[0:K-1];
+				data1 = OutputMask[K:2*K-1];
 			end
 		endcase
 	end
