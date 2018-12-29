@@ -174,6 +174,13 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 set obj [get_filesets sim_1]
 set files [list \
  "[file normalize "$origin_dir/../../testbenches/tb_GC_engine.sv"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/Tables.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/In0.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/Labels.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/OLabels.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/In1.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/Keys.txt"]"\
+ "[file normalize "$origin_dir/../../testbenches/GC_engine_testfiles/Logics.txt"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -190,6 +197,7 @@ set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
 set_property -name "top" -value "tb_GC_engine" -objects $obj
+set_property -name "xsim.simulate.runtime" -value "3000ns" -objects $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {

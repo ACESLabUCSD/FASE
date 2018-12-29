@@ -58,15 +58,23 @@ module tb_GC_engine;
 	integer X[num_gates];
 
 	always #50 clk = ~clk;
+	
+	localparam KEYFILE = "Keys.txt";
+	localparam LABELFILE = "Labels.txt";
+	localparam IN0FILE = "In0.txt";
+	localparam IN1FILE = "In1.txt";
+	localparam LOGICFILE = "Logics.txt";
+	localparam TABLEFILE = "Tables.txt";
+	localparam OLABELFILE = "OLabels.txt";
 		
 	initial begin
-		$readmemh({LOC, KEYFILE}, KEYS);
-		$readmemh({LOC, LABELFILE}, IN_LABELS);
-		$readmemh({LOC, IN0FILE}, IN0);
-		$readmemh({LOC, IN1FILE}, IN1);
-		$readmemh({LOC, LOGICFILE}, G_LOGICS);
-		$readmemh({LOC, TABLEFILE}, T_REF);
-		$readmemh({LOC, OLABELFILE}, OUT_LABELS_REF);
+		$readmemh(KEYFILE, KEYS);
+		$readmemh(LABELFILE, IN_LABELS);
+		$readmemh(IN0FILE, IN0);
+		$readmemh(IN1FILE, IN1);
+		$readmemh(LOGICFILE, G_LOGICS);
+		$readmemh(TABLEFILE, T_REF);
+		$readmemh(OLABELFILE, OUT_LABELS_REF);
 		
 		clk = 'b0;
 		rst = 'b1;
