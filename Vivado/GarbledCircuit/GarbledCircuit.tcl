@@ -100,6 +100,13 @@ set files [list \
  "[file normalize "$origin_dir/../../AES/SubBytes.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/GC_engine.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/FIFO.sv"]"\
+ "[file normalize "$origin_dir/../../GarbledCircuit/GarbledCircuit.sv"]"\
+ "[file normalize "$origin_dir/../../LabelGen/XOR_tree.sv"]"\
+ "[file normalize "$origin_dir/../../LabelGen/OscRing.sv"]"\
+ "[file normalize "$origin_dir/../../LabelGen/LabelGen.sv"]"\
+ "[file normalize "$origin_dir/../../LabelGen/TRNG_RO.sv"]"\
+ "[file normalize "$origin_dir/../../GarbledCircuit/Netlist.sv"]"\
+ "[file normalize "$origin_dir/../../GarbledCircuit/DPRAM.sv"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -144,13 +151,48 @@ set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
 
+set file "$origin_dir/../../GarbledCircuit/GarbledCircuit.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../LabelGen/XOR_tree.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../LabelGen/OscRing.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../LabelGen/LabelGen.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../LabelGen/TRNG_RO.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../GarbledCircuit/Netlist.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../GarbledCircuit/DPRAM.sv"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
 
 # Set 'sources_1' fileset file properties for local files
 # None
 
 # Set 'sources_1' fileset properties
 set obj [get_filesets sources_1]
-set_property -name "top" -value "GC_engine" -objects $obj
+set_property -name "top" -value "GarbledCircuit" -objects $obj
 
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
@@ -173,12 +215,14 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 # Set 'sim_1' fileset object
 set obj [get_filesets sim_1]
 set files [list \
- "[file normalize "$origin_dir/../../testbenches/tb_GC_engine.sv"]"\
+ "[file normalize "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"]"\
+ "[file normalize "$origin_dir/../../testbenches/Rand.txt"]"\
+ "[file normalize "$origin_dir/../../GarbledCircuit/Zeros.txt"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'sim_1' fileset file properties for remote files
-set file "$origin_dir/../../testbenches/tb_GC_engine.sv"
+set file "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
@@ -189,7 +233,8 @@ set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
 
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
-set_property -name "top" -value "tb_GC_engine" -objects $obj
+set_property -name "top" -value "tb_GarbledCircuit" -objects $obj
+set_property -name "xsim.simulate.runtime" -value "4000ns" -objects $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {

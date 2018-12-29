@@ -75,12 +75,6 @@ parameter NETLISTFILE = "Netlist.txt";
 parameter KEYFILE = "Keys.txt";
 parameter LABELFILE = "Labels.txt";
 parameter MASKFILE = "OMasks.txt";
-parameter IN0FILE = "In0.txt";
-parameter IN1FILE = "In1.txt";
-parameter LOGICFILE = "Logics.txt";
 parameter TABLEFILE = "Tables.txt";
 parameter OLABELFILE = "OLabels.txt";
-parameter RANDFILE = "Rand.txt";
-parameter ZEROFILE = "Zeros.txt";
-
 `endif 

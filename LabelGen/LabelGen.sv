@@ -39,10 +39,11 @@ module LabelGen #(parameter S = 20, K = 128)(
     );
 	
 	localparam SIZE = S+1; //2 keys per gate
+	localparam RANDFILE = "Rand.txt";
 	
 	logic	[K-1:0]	RAND [0:(2**SIZE)+2]; //2 extra for R and AES key
 	initial begin
-		$readmemh({LOC, RANDFILE}, RAND);
+		$readmemh(RANDFILE, RAND);
 	end
 	
 	logic	[SIZE-1:0] index, index_;

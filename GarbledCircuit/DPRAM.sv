@@ -9,9 +9,11 @@ module DPRAM #(parameter S = 20, K = 128)(
 	output	logic	[K-1:0]	rd_data_0, rd_data_1
 );
 
+	localparam ZEROFILE = "Zeros.txt";
+
 	logic	[K-1:0]	DPRAM [0:2**S-1];
 	initial begin
-		$readmemh({LOC, ZEROFILE}, DPRAM);
+		$readmemh(ZEROFILE, DPRAM);
 	end
 	
 	always_comb  begin
