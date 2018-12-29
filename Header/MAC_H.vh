@@ -70,10 +70,11 @@ parameter S = 14; //width of gate id (or wire id), maximum number of gates = 2^S
 
 
 /*simulation files*/	
-parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/mix_logic/";
+parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/all_logic/";
 parameter NETLISTFILE = "Netlist.txt";
 parameter KEYFILE = "Keys.txt";
 parameter LABELFILE = "Labels.txt";
+parameter MASKFILE = "OMasks.txt";
 parameter IN0FILE = "In0.txt";
 parameter IN1FILE = "In1.txt";
 parameter LOGICFILE = "Logics.txt";

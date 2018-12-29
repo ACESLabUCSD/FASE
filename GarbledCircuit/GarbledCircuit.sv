@@ -325,7 +325,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 			end
 			GETKEYS: begin
 				en_LabelGen = 'b11;
-				R = key[K-1:0];
+				R = {key[K-1:1], 1'b1}; //last bit of R is always 1
 				AES_key = key[2*K-1:K];
 				nextState = CONSTLABELS;
 			end				

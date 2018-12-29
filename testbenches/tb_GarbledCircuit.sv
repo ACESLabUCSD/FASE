@@ -32,16 +32,17 @@ module tb_GarbledCircuit;
 	logic	[K-1:0]	Keys [0:1];
 	logic	[K-1:0]	InLabels [0:2**S-1];
 	logic	[K-1:0]	GarbledTables [0:2**S-1];
-	logic	[K-1:0]	OutputMask ;
+	logic	[0:K-1]	OutputMask ;
 	
 	always #50 clk = ~clk;
 	
-	integer k, f_IL, f_K, f_GT;
+	integer k, f_IL, f_K, f_GT, f_M;
 		
 	initial begin	
 		f_IL = $fopen({LOC, LABELFILE},"w");
 		f_K = $fopen({LOC, KEYFILE},"w");
 		f_GT = $fopen({LOC, TABLEFILE},"w");
+		f_M = $fopen({LOC, MASKFILE},"w");
 		
 		clk = 'b0;
 		rst = 'b1;	
@@ -69,22 +70,27 @@ module tb_GarbledCircuit;
 				end
 				else if(tag[1:0] == 2'b11) begin
 					OutputMask = data0;	
-		
-					for (k = 0; k < 21; k = k+1)
-						$fwrite(f_IL,"%H\n", InLabels[k]);
-					for (k = 0; k < 8; k = k+1) begin
-						$fwrite(f_GT,"%H\n", GarbledTables[2*k]);
-						$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
-					end
-						
-					$fclose(f_IL);
-					$fclose(f_K);
-					$fclose(f_GT);
-					$stop();
-					//break;
+					break;
 				end
 			end
-		end		
+		end	
+		
+		for (k = 0; k < 23; k = k+1)
+			$fwrite(f_IL,"%H\n", InLabels[k]);
+		for (k = 0; k < 2; k = k+1)
+			$fwrite(f_K,"%H\n", Keys[k]);
+		for (k = 0; k < 8; k = k+1) begin
+			$fwrite(f_GT,"%H\n", GarbledTables[2*k]);
+			$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
+		end
+		for (k = 0; k < 11; k = k+1)
+			$fwrite(f_M,"%b\n", OutputMask[k]);
+			
+		$fclose(f_IL);
+		$fclose(f_K);
+		$fclose(f_GT);
+		$fclose(f_M);
+		$stop();	
 	end
 
 endmodule
