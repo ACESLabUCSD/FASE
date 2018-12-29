@@ -1,12 +1,12 @@
 module tb_MxM_ReLu;
 
-parameter W = 8, M = 10, N = 8, P = 6, Q = 4;  // W = bit-width, (MxN)x(NxP) -> (MxP)
+localparam W = 8, M = 10, N = 8, P = 6, Q = 4;  // W = bit-width, (MxN)x(NxP) -> (MxP)
 
 reg clk, rst;
 reg [W-1:0] A, X;
 wire signed [W-1:0] Y;
 
-MxM_ReLu #(.W(W), .M(M), .N(N), .P(P), .Q(Q)) uut( 
+MxM_ReLu #(.W(W)) uut( 
 	.clk(clk), .rst(rst),
 	.A(A), .X(X),
 	.Y(Y)

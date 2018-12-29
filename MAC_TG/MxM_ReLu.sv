@@ -22,7 +22,7 @@ module MxM_ReLu #(parameter W = 8)( //W = bit-width
 );
 	
 	parameter S = 2;
-	parameter N[S+1:0] = {4, 6, 8, 10};
+	parameter [3:0] N[S+1:0] = {4, 6, 8, 10};
 	parameter [S-1:0] R = {1'b1, 1'b1};
 	reg [log2(S)-1:0] s;
 	reg [4:0] n, m; 

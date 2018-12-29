@@ -1,6 +1,6 @@
 module tb_MxM;
 
-parameter W = 8, M = 200, N = 100, P = 120; // W = bit-width, (MxN)x(NxP) -> (MxP)
+localparam W = 8, M = 200, N = 100, P = 120; // W = bit-width, (MxN)x(NxP) -> (MxP)
 
 reg clk, rst;
 reg [W-1:0] A, X;
