@@ -36,13 +36,24 @@ module tb_GarbledCircuit;
 	
 	always #50 clk = ~clk;
 	
-	integer k, f_IL, f_K, f_GT, f_M;
+	integer f_N, f_IL, f_K, f_GT, f_M;
+	integer k, line, init_size, input_size, dff_size, output_size, gate_size, num_XOR;
 		
 	initial begin	
-		f_IL = $fopen({LOC, LABELFILE},"w");
-		f_K = $fopen({LOC, KEYFILE},"w");
-		f_GT = $fopen({LOC, TABLEFILE},"w");
-		f_M = $fopen({LOC, MASKFILE},"w");
+		f_N = $fopen({LOC, NETLISTFILE},"r");
+		
+		$fscanf(f_N, "%h", line);
+		init_size = line[2*S-1:S]+line[S-1:0];
+		$fscanf(f_N, "%h", line);
+		input_size = line[2*S-1:S]+line[S-1:0];
+		$fscanf(f_N, "%h", line);
+		output_size = line[S-1:0];
+		dff_size = line[2*S-1:S];
+		$fscanf(f_N, "%h", line);
+		gate_size = line[S-1:0];
+		num_XOR = line[2*S-1:S];
+		
+		$fclose(f_N);
 		
 		clk = 'b0;
 		rst = 'b1;	
@@ -75,21 +86,27 @@ module tb_GarbledCircuit;
 			end
 		end	
 		
-		for (k = 0; k < 23; k = k+1)
+		f_IL = $fopen({LOC, LABELFILE},"w");
+		f_K = $fopen({LOC, KEYFILE},"w");
+		f_GT = $fopen({LOC, TABLEFILE},"w");
+		f_M = $fopen({LOC, MASKFILE},"w");
+		
+		for (k = 0; k < (init_size+input_size+2); k = k+1) //+2 for constant labels
 			$fwrite(f_IL,"%H\n", InLabels[k]);
 		for (k = 0; k < 2; k = k+1)
 			$fwrite(f_K,"%H\n", Keys[k]);
-		for (k = 0; k < 8; k = k+1) begin
+		for (k = 0; k < gate_size-num_XOR; k = k+1) begin
 			$fwrite(f_GT,"%H\n", GarbledTables[2*k]);
 			$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
 		end
-		for (k = 0; k < 11; k = k+1)
+		for (k = 0; k < output_size; k = k+1)
 			$fwrite(f_M,"%b\n", OutputMask[k]);
 			
 		$fclose(f_IL);
 		$fclose(f_K);
 		$fclose(f_GT);
 		$fclose(f_M);
+		
 		$stop();	
 	end
 

@@ -4,7 +4,7 @@ module Netlist #(parameter S = 20)(
 	input								clk, rst, start,
 	input					[S-1:0]		gid,
 	output	logic						done,
-	output	logic	signed	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size,
+	output	logic	signed	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size, num_XOR,
 	output								in0F, in1F, //1 if they are inputs of the circuit
 	output	logic	signed	[S-1:0]		in0, in1,
 	output	logic			[3:0]		g_logic,
@@ -70,6 +70,7 @@ module Netlist #(parameter S = 20)(
 			GATE: begin
 				index = 'd3;
 				gate_size = line[S-1:0];
+				num_XOR = line[2*S-1:S];
 				done = 'b1;
 				nextState = GARBLE;
 			end				

@@ -36,7 +36,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic			[S-1:0]	cid, gid;
 	logic			[3:0]	g_logic;
 	logic					done_Netlist;
-	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size;
+	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR;
 	logic					in0F, in1F;
 	logic	signed	[S-1:0]	in0, in1;
 	logic					is_output;
@@ -45,7 +45,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.clk(clk), .rst(rst), .start(start),
 		.gid(gid),
 		.done(done_Netlist),
-		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), .output_size(output_size), .gate_size(gate_size),
+		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), 
+		.output_size(output_size), .gate_size(gate_size), .num_XOR(num_XOR),
 		.in0F(in0F), .in1F(in1F),
 		.in0(in0), .in1(in1),
 		.g_logic(g_logic),
@@ -80,7 +81,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	logic			is_XOR, is_XNOR;
 	logic	[K-1:0]	XOR_label;
-	logic	[S-1:0]	num_XOR;
+	logic	[S-1:0]	cur_num_XOR;
 		
 	always_comb begin	
 		is_XOR = ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE))? 'b1 : 'b0;
@@ -196,7 +197,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		
 	always_comb begin			
 		OL_wr_addr_beg = gid;
-		GT_wr_addr_beg = gid - num_XOR;
+		GT_wr_addr_beg = gid - cur_num_XOR;
 	
 		IL_rd_addr_0 = in0+'d2;//first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
@@ -272,14 +273,14 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst) begin 
 			gid <= -'d1;
-			num_XOR <= 'd0;
+			cur_num_XOR <= 'd0;
 			OM_index <= 'd0;
 			GT_rd_index <= 'd0;
 		end
 		else begin 
 			if(gid_inc) begin
 				gid <= gid + 'd1;
-				if(is_XOR) num_XOR <= num_XOR + 'd1;
+				if(is_XOR) cur_num_XOR <= cur_num_XOR + 'd1;
 			end
 			if(OM_inc_end) OM_index <= OM_index + 'd1;
 			if(GT_rd_inc) GT_rd_index <= GT_rd_index + 'd1;
