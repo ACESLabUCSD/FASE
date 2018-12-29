@@ -91,9 +91,9 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*FIFOs for output labels and garbled tables*/
 	
-	logic			OL_GT_wr_en_beg, OL_GT_wr_en_end;
-	logic	[S-1:0]	OL_wr_addr_beg, OL_wr_addr_end;
-	logic	[S-1:0]	GT_wr_addr_beg, GT_wr_addr_end;
+	logic					OL_GT_wr_en_beg, OL_GT_wr_en_end;
+	logic			[S-1:0]	OL_wr_addr_beg, OL_wr_addr_end;
+	logic	signed 	[S-1:0]	GT_wr_addr_beg, GT_wr_addr_end;
 	
 	FIFO #(.N(1), .S(NR_AES)) OL_GT_wr_en_0(	
 		.clk(clk), .rst(rst),
@@ -115,8 +115,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*used later for transferring garbled tables*/
 	
-	logic	[S-1:0]	GT_rd_index;
-	logic			GT_rd_inc;
+	logic	signed	[S-1:0]	GT_rd_index;
+	logic					GT_rd_inc;
 	
 	/*memories for input labels, output labels, and garbled tables*/
 	
