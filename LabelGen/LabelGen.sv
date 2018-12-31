@@ -2,16 +2,22 @@
 `include "../Header/MAC_H.vh"
 
 `ifdef SIM
-module LabelGen #(parameter K = 128)(
-    input wire clk, rst, en,
-    output [K-1:0] key
+module LabelGen #(parameter S = 20, K = 128)(
+    input 				clk, rst,
+    input 	[1:0]		en,
+    output	[2*K-1:0]	key
     );
 	
-	wire clk_en;
+	logic [1:0]	clk_en;
 	
-	BUFGCE 	BUFGCE_inst (
-		.O(clk_en), // 1-bit output: Buffer
-		.CE(en), // 1-bit input: Buffer enable
+	BUFGCE 	BUFGCE_inst_0 (
+		.O(clk_en[0]), // 1-bit output: Buffer
+		.CE(en[0]), // 1-bit input: Buffer enable
+		.I(clk) // 1-bit input: Buffer
+	);	
+	BUFGCE 	BUFGCE_inst_1 (
+		.O(clk_en[1]), // 1-bit output: Buffer
+		.CE(en[1]), // 1-bit input: Buffer enable
 		.I(clk) // 1-bit input: Buffer
 	);
 	 
@@ -21,10 +27,15 @@ module LabelGen #(parameter K = 128)(
 	generate
 	for (k = 0; k < K; k = k + 1)
 	begin: TRNG
-	TRNG_RO #(n, N_RO, logN) TRNG_RO( 
-		.clk(clk_en),
+	TRNG_RO #(n, N_RO, logN) TRNG_RO_0( 
+		.clk(clk_en[0]),
 		.rst(rst),
 		.out(key[k])
+    );
+	TRNG_RO #(n, N_RO, logN) TRNG_RO_1( 
+		.clk(clk_en[1]),
+		.rst(rst),
+		.out(key[K+k])
     );
 	end
 	endgenerate
