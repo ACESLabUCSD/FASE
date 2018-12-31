@@ -37,6 +37,10 @@ function automatic [127:0] changeEndian;
 	end
 endfunction
 
+parameter NOTINPUT	= -1;
+parameter CONSTZERO	= -2;
+parameter CONSTONE	= -3;
+
 parameter ANDGATE	= 4'b1000; //8
 parameter ANDNGATE	= 4'b0100; //4
 parameter NANDGATE	= 4'b0111; //7
@@ -48,7 +52,7 @@ parameter NORNGATE	= 4'b0010; //2
 parameter XORGATE	= 4'b0110; //6
 parameter XNORGATE	= 4'b1001; //9
 parameter NOTGATE	= 4'b1100; //12
-parameter DFFGATE	= (-1);
+parameter DFFGATE	= 4'b1111;
 
 function automatic integer Type2V;
 	input [3:0] gateType;
@@ -68,9 +72,9 @@ parameter NR_AES = 10; //no of pipeline stages in AES = no of AES rounds
 parameter K = 128; //security parameter, bit-length of keys
 parameter S = 14; //width of gate id (or wire id), maximum number of gates = 2^S
 
-
 /*simulation files*/	
-parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/all_logic/";
+parameter CC = 32;
+parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/hamming/";
 parameter NETLISTFILE = "Netlist.txt";
 parameter KEYFILE = "Keys.txt";
 parameter LABELFILE = "Labels.txt";

@@ -2,7 +2,7 @@
 
 module Netlist #(parameter S = 20)(
 	input								clk, rst, start,
-	input					[S-1:0]		gid,
+	input					[S-1:0]		rd_addr,
 	output	logic						done,
 	output	logic	signed	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size, num_XOR,
 	output								in0F, in1F, //1 if they are inputs of the circuit
@@ -75,7 +75,7 @@ module Netlist #(parameter S = 20)(
 				nextState = GARBLE;
 			end				
 			GARBLE: begin
-				index = gid+'d4;
+				index = rd_addr+'d4;
 				is_output = line[0];
 				g_logic = line[4:1];
 				in1 = line[S+4:5];
@@ -85,7 +85,9 @@ module Netlist #(parameter S = 20)(
 		endcase
 	end
 	
-	assign in0F = (in0 < input_size)? 'b1 : 'b0;
-	assign in1F = (in1 < input_size)? 'b1 : 'b0;
+	logic	signed	[S-1:0]	init_input_dff_size;
+	assign init_input_dff_size = init_size + input_size;// + dff_size;
+	assign in0F = (in0 < init_input_dff_size)? 'b1 : 'b0;
+	assign in1F = (in1 < init_input_dff_size)? 'b1 : 'b0;
 	
 endmodule
