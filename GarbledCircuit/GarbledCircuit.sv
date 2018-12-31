@@ -33,9 +33,9 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*load the netlist*/
 	
-	logic					cid_rst, cur_index_rst;/*gid_rst, did_rst*/;
-	logic					cid_inc, cur_index_inc, cur_index_overflow/*gid_inc, did_inc*/;
-	logic			[S-1:0]	/*cid, gid, did*/cur_index;
+	logic					cid_rst, cur_index_rst;
+	logic					cid_inc, cur_index_inc, cur_index_overflow;
+	logic			[S-1:0]	cur_index;
 	logic			[S-1:0]	NL_rd_addr;
 	logic			[3:0]	g_logic;
 	logic					done_Netlist;
@@ -62,7 +62,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		DFF_present = (dff_size > 'd0);
 		init_input_size = init_size + input_size;
 		dff_gate_size = dff_size + gate_size;
-		NL_rd_addr = cur_index/*gid + did*/;
+		NL_rd_addr = cur_index;
 	end
 	
 	/*garble a gate*/
@@ -95,7 +95,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	/*XORs and DFFs*/
 	
 	logic			is_FF, is_NOT, is_XOR, is_XNOR, is_XORS;
-	logic	[K-1:0]	DFF_label, XOR_label; //, DFF_XOR_label;
+	logic	[K-1:0]	DFF_label, XOR_label;
 	logic	[S-1:0]	cur_num_XOR;
 		
 	always_comb begin
@@ -108,9 +108,6 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		if (is_NOT) XOR_label = in0_label^R;
 		else if(is_XOR) XOR_label = in0_label^in1_label;
 		else XOR_label = in0_label^in1_label^R;
-		
-		//if(is_FF) DFF_XOR_label = DFF_label;
-		//else DFF_XOR_label = XOR_label;
 	end
 	
 	/*FIFOs for output labels and garbled tables*/
@@ -238,10 +235,10 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	);
 		
 	always_comb begin			
-		OL_wr_addr_beg = cur_index/*gid*/;
-		GT_wr_addr_beg = cur_index/*gid*/- dff_size - cur_num_XOR;
+		OL_wr_addr_beg = cur_index;
+		GT_wr_addr_beg = cur_index - dff_size - cur_num_XOR;
 	
-		IL_rd_addr_0 = in0+'d2;//first two locations are saved for constant labels
+		IL_rd_addr_0 = in0+'d2; //first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
 		IL_wr_data_0 = in0_label;
 		IL_wr_data_1 = in1_label; 
@@ -258,8 +255,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 
 		OL_wr_en_0 = OL_GT_wr_en_end;
 		OL_wr_en_1 = (cur_index_inc&is_XORS)|is_FF;
-		OL_wr_addr_0 = OL_wr_addr_end/* + dff_size*/;
-		OL_wr_addr_1 = cur_index/*is_FF? did : gid + dff_size*/; 
+		OL_wr_addr_0 = OL_wr_addr_end; 
+		OL_wr_addr_1 = cur_index; 
 		OL_rd_addr_0 = in0-init_input_size;
 		OL_rd_addr_1 = in1-init_input_size;  
 		OL_wr_data_0 = out_label;
@@ -318,7 +315,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	end
 	
 	always_ff @(posedge clk or posedge rst) begin
-		if(rst|cur_index_rst/*gid_rst*/) OutputMask <= {(2**S){1'b0}};		
+		if(rst|cur_index_rst) OutputMask <= {(2**S){1'b0}};		
 		else if(OM_inc_end) begin
 			if(is_XOR_end) OutputMask[output_size-1-OM_index] <= XOR_mask_end;
 			else OutputMask[output_size-1-OM_index] <= GC_mask;
@@ -344,38 +341,6 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		
 		if(rst|cur_index_rst) GT_ext_rd_addr <= 0;
 		else if(GT_ext_rd_inc) GT_ext_rd_addr <= GT_ext_rd_addr + 'd1;
-		
-		/*if(rst|gid_rst) gid <= 0;
-		else if(gid_inc) gid <= gid + 'd1;
-		
-		if(rst|gid_rst) cur_num_XOR <= 0;
-		else if(gid_inc&is_XORS) cur_num_XOR <= cur_num_XOR + 'd1;
-		
-		if(rst|gid_rst) OM_index <= 0;
-		else if(OM_inc_end) OM_index <= OM_index + 'd1;
-		
-		if(rst|gid_rst) GT_ext_rd_addr <= 0;
-		else if(GT_ext_rd_inc) GT_ext_rd_addr <= GT_ext_rd_addr + 'd1;
-		
-		if(rst|did_rst) did <= 0;
-		else if(did_inc) did <= did + 'd1;
-		
-		if(rst) begin 
-			gid <= 'd0;
-			did <= 'd0;
-			cur_num_XOR <= 'd0;
-			OM_index <= 'd0;
-			GT_ext_rd_addr <= 'd0;
-		end
-		else begin 
-			if(gid_inc) begin
-				gid <= gid + 'd1;
-				if(is_XORS) cur_num_XOR <= cur_num_XOR + 'd1;
-			end
-			if(did_inc) did <= did + 'd1;
-			if(OM_inc_end) OM_index <= OM_index + 'd1;
-			if(GT_ext_rd_inc) GT_ext_rd_addr <= GT_ext_rd_addr + 'd1;
-		end*/
 	end
 	
 	/*garble the netlist*/
@@ -399,11 +364,9 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	always_comb begin
 		en_LabelGen = 'b0;
 		cid_inc = 'b0;
-		cur_index_inc/*gid_inc*/ = 'b0;
-		//did_inc = 'b0;
+		cur_index_inc = 'b0;
 		cid_rst = 'b0;
-		cur_index_rst /*gid_rst*/ = 'b0;
-		//did_rst = 'b0;
+		cur_index_rst = 'b0;
 		IL_wr_en_0 = 'b0;
 		IL_wr_en_1 = 'b0;
 		IL_wr_addr_0 = {S{1'b1}};
@@ -414,9 +377,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		case(currState)
 			IDLE: begin
 				cid_rst = 'b1;
-				cur_index_rst = 'b1;
-				/*gid_rst = 'b1;
-				did_rst = 'b1;	*/			
+				cur_index_rst = 'b1;		
 				R = 'b0; 
 				AES_key = 'b0; 
 				in0_label = 'b0;
@@ -463,7 +424,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				CONSTZERO = -2, CONSTONE = -3, IL_rd_addr_0 = in0+'d2, IL_rd_addr_1 = in1+'d2, 
 				labels for CONSTZERO and CONSTONE are saved in locations 0 and 1 respectively of InputLabels*/
 				
-				cur_index_inc/*did_inc*/ = 'b1;
+				cur_index_inc = 'b1;
 				
 				if(cid == 'd0) begin
 					if ((in1 == CONSTZERO)||(in1 == CONSTONE)) DFF_label = IL_rd_data_1;
@@ -479,13 +440,12 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 					if ((in0 == CONSTZERO)||(in0 == CONSTONE)) DFF_label = IL_rd_data_0;
 					else DFF_label = OL_rd_data_0;
 				end
-				if(cur_index/*did*/ == dff_size-1) begin 
+				if(cur_index == dff_size-1) begin 
 					nextState = GARBLE;
 				end
 			end		
-			GARBLE: begin
-				//gid_inc = 'b1;				
-				cur_index_inc/*gid_inc*/ = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);// & (cur_index < dff_gate_size-1)/*(gid < gate_size-1)*/;
+			GARBLE: begin				
+				cur_index_inc = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);
 			
 				IL_wr_en_0 = in0F & ~ILF_rd_data_0;
 				IL_wr_en_1 = in1F & ~ILF_rd_data_1 & ~is_NOT; 
@@ -508,14 +468,12 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				
 				OL_GT_wr_en_beg = cur_index_inc&(~is_XORS);		
 
-				if((/*gid == gate_size-1*/cur_index == dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)) nextState = MASKS;
+				if((cur_index == dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)) nextState = MASKS;
 			end
 			MASKS: begin
 				if(OM_index == output_size - 1) begin
 					cid_inc = 'b1;
-					cur_index_rst = 'b1;
-					/*gid_rst = 'b1;
-					did_rst = 'b1;*/				
+					cur_index_rst = 'b1;				
 					nextState = DFF;
 				end
 			end

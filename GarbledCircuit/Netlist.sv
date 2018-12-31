@@ -86,7 +86,7 @@ module Netlist #(parameter S = 20)(
 	end
 	
 	logic	signed	[S-1:0]	init_input_dff_size;
-	assign init_input_dff_size = init_size + input_size;// + dff_size;
+	assign init_input_dff_size = init_size + input_size;
 	assign in0F = (in0 < init_input_dff_size)? 'b1 : 'b0;
 	assign in1F = (in1 < init_input_dff_size)? 'b1 : 'b0;
 	
