@@ -4,6 +4,6 @@
 `define _TEMP_H_
 
 /*simulation files*/	
-parameter CC = 31;
+parameter CC = 32;
 parameter LOC = "/home/siam/git/hostCPU_TG/bin/scd/hw_aclrtr/hamming_32bit_32cc/";
 `endif

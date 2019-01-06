@@ -141,118 +141,71 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	/*memories for input labels, output labels, and garbled tables*/
 	
+	logic				IL_clr;
 	logic				IL_wr_en_0, IL_wr_en_1;
 	logic	[S-1:0]		IL_wr_addr_0, IL_wr_addr_1;
 	logic	[S-1:0]		IL_rd_addr_0, IL_rd_addr_1;  
 	logic	[K-1:0]		IL_wr_data_0, IL_wr_data_1; 
+	logic				IL_rd_data_ready_0, IL_rd_data_ready_1; 
 	logic	[K-1:0]		IL_rd_data_0, IL_rd_data_1;
 	
 	DPRAM #(.S(S), .K(K)) InLabels(
-		.clk(clk), .rst(rst),
+		.clk(clk), .rst(rst), .clr(IL_clr),
 		.wr_en_0(IL_wr_en_0), .wr_en_1(IL_wr_en_1),
 		.wr_addr_0(IL_wr_addr_0), .wr_addr_1(IL_wr_addr_1),
 		.rd_addr_0(IL_rd_addr_0), .rd_addr_1(IL_rd_addr_1),  
 		.wr_data_0(IL_wr_data_0), .wr_data_1(IL_wr_data_1), 
+		.rd_data_ready_0(IL_rd_data_ready_0), .rd_data_ready_1(IL_rd_data_ready_1),
 		.rd_data_0(IL_rd_data_0), .rd_data_1(IL_rd_data_1)
 	);
 	
-	logic				ILF_clr;
-	logic				ILF_wr_en_0, ILF_wr_en_1;
-	logic	[S-1:0]		ILF_wr_addr_0, ILF_wr_addr_1;
-	logic	[S-1:0]		ILF_rd_addr_0, ILF_rd_addr_1;  
-	logic				ILF_wr_data_0, ILF_wr_data_1; 
-	logic				ILF_rd_data_0, ILF_rd_data_1;
-	
-	SBFRAM #(.S(S), .K(1)) InLabelsFlag(
-		.clk(clk), .rst(rst), .clr(ILF_clr),
-		.wr_en_0(ILF_wr_en_0), .wr_en_1(ILF_wr_en_1),
-		.wr_addr_0(ILF_wr_addr_0), .wr_addr_1(ILF_wr_addr_1),
-		.rd_addr_0(ILF_rd_addr_0), .rd_addr_1(ILF_rd_addr_1),  
-		.wr_data_0(ILF_wr_data_0), .wr_data_1(ILF_wr_data_1), 
-		.rd_data_0(ILF_rd_data_0), .rd_data_1(ILF_rd_data_1)
-	);
-	
+	logic				OL_clr;
 	logic				OL_wr_en_0, OL_wr_en_1;
 	logic	[S-1:0]		OL_wr_addr_0, OL_wr_addr_1;
 	logic	[S-1:0]		OL_rd_addr_0, OL_rd_addr_1;  
 	logic	[K-1:0]		OL_wr_data_0, OL_wr_data_1; 
+	logic				OL_rd_data_ready_0, OL_rd_data_ready_1;
 	logic	[K-1:0]		OL_rd_data_0, OL_rd_data_1;
 	
 	DPRAM #(.S(S), .K(K)) OutLabels(
-		.clk(clk), .rst(rst),
+		.clk(clk), .rst(rst), .clr(OL_clr),
 		.wr_en_0(OL_wr_en_0), .wr_en_1(OL_wr_en_1),
 		.wr_addr_0(OL_wr_addr_0), .wr_addr_1(OL_wr_addr_1),
 		.rd_addr_0(OL_rd_addr_0), .rd_addr_1(OL_rd_addr_1),  
 		.wr_data_0(OL_wr_data_0), .wr_data_1(OL_wr_data_1), 
+		.rd_data_ready_0(OL_rd_data_ready_0), .rd_data_ready_1(OL_rd_data_ready_1),
 		.rd_data_0(OL_rd_data_0), .rd_data_1(OL_rd_data_1)
 	);
 	
-	logic				OLF_clr;
-	logic				OLF_wr_en_0, OLF_wr_en_1;
-	logic	[S-1:0]		OLF_wr_addr_0, OLF_wr_addr_1;
-	logic	[S-1:0]		OLF_rd_addr_0, OLF_rd_addr_1;  
-	logic				OLF_wr_data_0, OLF_wr_data_1; 
-	logic				OLF_rd_data_0, OLF_rd_data_1;
-	
-	SBFRAM #(.S(S), .K(1)) OutLabelsFlag(
-		.clk(clk), .rst(rst), .clr(OLF_clr),
-		.wr_en_0(OLF_wr_en_0), .wr_en_1(OLF_wr_en_1),
-		.wr_addr_0(OLF_wr_addr_0), .wr_addr_1(OLF_wr_addr_1),
-		.rd_addr_0(OLF_rd_addr_0), .rd_addr_1(OLF_rd_addr_1),  
-		.wr_data_0(OLF_wr_data_0), .wr_data_1(OLF_wr_data_1), 
-		.rd_data_0(OLF_rd_data_0), .rd_data_1(OLF_rd_data_1)
-	);
-	
+	logic				GT_clr;
 	logic				GT_wr_en_0, GT_wr_en_1;
 	logic	[S-1:0]		GT_wr_addr_0, GT_wr_addr_1;
 	logic	[S-1:0]		GT_rd_addr_0, GT_rd_addr_1;  
-	logic	[K-1:0]		GT_wr_data_0, GT_wr_data_1; 
+	logic	[K-1:0]		GT_wr_data_0, GT_wr_data_1;
+	logic				GT_rd_data_ready_0, GT_rd_data_ready_1; 
 	logic	[K-1:0]		GT_rd_data_0, GT_rd_data_1;
 	
 	DPRAM #(.S(S), .K(K)) GarbledTables(
-		.clk(clk), .rst(rst),
+		.clk(clk), .rst(rst), .clr(GT_clr),
 		.wr_en_0(GT_wr_en_0), .wr_en_1(GT_wr_en_1),
 		.wr_addr_0(GT_wr_addr_0), .wr_addr_1(GT_wr_addr_1),
 		.rd_addr_0(GT_rd_addr_0), .rd_addr_1(GT_rd_addr_1),  
 		.wr_data_0(GT_wr_data_0), .wr_data_1(GT_wr_data_1), 
+		.rd_data_ready_0(GT_rd_data_ready_0), .rd_data_ready_1(GT_rd_data_ready_1),
 		.rd_data_0(GT_rd_data_0), .rd_data_1(GT_rd_data_1)
 	);	
-	
-	logic				GTF_clr;
-	logic				GTF_wr_en_0, GTF_wr_en_1;
-	logic	[S-1:0]		GTF_wr_addr_0, GTF_wr_addr_1;
-	logic	[S-1:0]		GTF_rd_addr_0, GTF_rd_addr_1;  
-	logic				GTF_wr_data_0, GTF_wr_data_1; 
-	logic				GTF_rd_data_0, GTF_rd_data_1;
-	
-	SBFRAM #(.S(S), .K(1)) GarbledTablesFlag(
-		.clk(clk), .rst(rst), .clr(GTF_clr),
-		.wr_en_0(GTF_wr_en_0), .wr_en_1(GTF_wr_en_1),
-		.wr_addr_0(GTF_wr_addr_0), .wr_addr_1(GTF_wr_addr_1),
-		.rd_addr_0(GTF_rd_addr_0), .rd_addr_1(GTF_rd_addr_1),  
-		.wr_data_0(GTF_wr_data_0), .wr_data_1(GTF_wr_data_1), 
-		.rd_data_0(GTF_rd_data_0), .rd_data_1(GTF_rd_data_1)
-	);
-		
+			
 	always_comb begin			
 		OL_wr_addr_beg = cur_index;
 		GT_wr_addr_beg = cur_index - dff_size - cur_num_XOR;
 	
+		IL_clr = cur_index_rst;
 		IL_rd_addr_0 = in0+'d2; //first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
 		IL_wr_data_0 = in0_label;
 		IL_wr_data_1 = in1_label; 
-		
-		ILF_clr = cur_index_rst;
-		ILF_wr_en_0 = IL_wr_en_0;
-		ILF_wr_en_1 = IL_wr_en_1; 
-		ILF_wr_addr_0 = IL_wr_addr_0;
-		ILF_wr_addr_1 = IL_wr_addr_1; 
-		ILF_rd_addr_0 = IL_rd_addr_0;
-		ILF_rd_addr_1 = IL_rd_addr_1;
-		ILF_wr_data_0 = 'b1;
-		ILF_wr_data_1 = 'b1;
 
+		OL_clr = cur_index_rst;
 		OL_wr_en_0 = OL_GT_wr_en_end;
 		OL_wr_en_1 = (cur_index_inc&is_XORS)|is_FF;
 		OL_wr_addr_0 = OL_wr_addr_end; 
@@ -262,16 +215,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		OL_wr_data_0 = out_label;
 		OL_wr_data_1 = is_FF? DFF_label : XOR_label;
 
-		OLF_clr = cur_index_rst;
-		OLF_wr_en_0 = OL_wr_en_0;
-		OLF_wr_en_1 = OL_wr_en_1;
-		OLF_wr_addr_0 = OL_wr_addr_0;
-		OLF_wr_addr_1 = OL_wr_addr_1;
-		OLF_rd_addr_0 = OL_rd_addr_0;
-		OLF_rd_addr_1 = OL_rd_addr_1;  
-		OLF_wr_data_0 = 'b1;
-		OLF_wr_data_1 = 'b1; 
-
+		GT_clr = cur_index_rst;
 		GT_wr_en_0 = OL_GT_wr_en_end;
 		GT_wr_en_1 = OL_GT_wr_en_end;
 		GT_wr_addr_0 = 2*GT_wr_addr_end;
@@ -279,17 +223,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		GT_rd_addr_0 = 2*GT_ext_rd_addr;
 		GT_rd_addr_1 = 2*GT_ext_rd_addr+'d1;  
 		GT_wr_data_0 = t0;
-		GT_wr_data_1 = t1; 
-
-		GTF_clr = cur_index_rst;
-		GTF_wr_en_0 = GT_wr_en_0;
-		GTF_wr_en_1 = GT_wr_en_1;
-		GTF_wr_addr_0 = GT_wr_addr_0;
-		GTF_wr_addr_1 = GT_wr_addr_1;
-		GTF_rd_addr_0 = GT_rd_addr_0;
-		GTF_rd_addr_1 = GT_rd_addr_1;  
-		GTF_wr_data_0 = 'b1;
-		GTF_wr_data_1 = 'b1;		
+		GT_wr_data_1 = t1; 	
 	end
 	
 	/*store output masks*/
@@ -429,7 +363,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				if(cid == 'd0) begin
 					if ((in1 == CONSTZERO)||(in1 == CONSTONE)) DFF_label = IL_rd_data_1;
 					else begin //generate init label and store in both InputLabels and OutputLabels
-						IL_wr_en_1 = ~ILF_rd_data_1; 
+						IL_wr_en_1 = ~IL_rd_data_ready_1; 
 						IL_wr_addr_1 = in1+'d2;
 						en_LabelGen = {IL_wr_en_1, 1'b0};
 						in1_label = key[2*K-1:K]; 
@@ -445,23 +379,23 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				end
 			end		
 			GARBLE: begin				
-				cur_index_inc = (in0F|OLF_rd_data_0) & (in1F|OLF_rd_data_1);
+				cur_index_inc = (in0F|OL_rd_data_ready_0) & (in1F|OL_rd_data_ready_1);
 			
-				IL_wr_en_0 = in0F & ~ILF_rd_data_0;
-				IL_wr_en_1 = in1F & ~ILF_rd_data_1 & ~is_NOT; 
+				IL_wr_en_0 = in0F & ~IL_rd_data_ready_0;
+				IL_wr_en_1 = in1F & ~IL_rd_data_ready_1 & ~is_NOT; 
 				IL_wr_addr_0 = in0+'d2;
 				IL_wr_addr_1 = in1+'d2; 
 				
 				en_LabelGen = {IL_wr_en_1, IL_wr_en_0};
 				
 				if(in0F) begin
-					if(ILF_rd_data_0) in0_label = IL_rd_data_0;
+					if(IL_rd_data_ready_0) in0_label = IL_rd_data_0;
 					else in0_label = key[K-1:0];
 				end
 				else in0_label = OL_rd_data_0;
 				
 				if(in1F) begin
-					if(ILF_rd_data_1) in1_label = IL_rd_data_1;
+					if(IL_rd_data_ready_1) in1_label = IL_rd_data_1;
 					else in1_label = key[2*K-1:K];
 				end
 				else in1_label = OL_rd_data_1;	
@@ -526,7 +460,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 					data1 = in1_label;					
 				end
 				else begin
-					if(GTF_rd_data_0) begin
+					if(GT_rd_data_ready_0) begin
 						tag = 3'b010;
 						GT_ext_rd_inc = 'b1;
 						index0 = 2*GT_ext_rd_addr;
