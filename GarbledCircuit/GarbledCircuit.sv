@@ -177,15 +177,16 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.rd_data_0(OL_rd_data_0), .rd_data_1(OL_rd_data_1)
 	);
 	
-	logic				GT_clr;
-	logic				GT_wr_en_0, GT_wr_en_1;
-	logic	[S-1:0]		GT_wr_addr_0, GT_wr_addr_1;
-	logic	[S-1:0]		GT_rd_addr_0, GT_rd_addr_1;  
-	logic	[K-1:0]		GT_wr_data_0, GT_wr_data_1;
-	logic				GT_rd_data_ready_0, GT_rd_data_ready_1; 
-	logic	[K-1:0]		GT_rd_data_0, GT_rd_data_1;
+	/*The memory for Garbled Tables has half the elements each with twice the bit-width, since tables are generated in pairs*/
+	logic					GT_clr;
+	logic					GT_wr_en_0, GT_wr_en_1;
+	logic	[S-2:0]			GT_wr_addr_0, GT_wr_addr_1;
+	logic	[S-2:0]			GT_rd_addr_0, GT_rd_addr_1;  
+	logic	[2*K-1:0]		GT_wr_data_0, GT_wr_data_1;
+	logic					GT_rd_data_ready_0, GT_rd_data_ready_1; 
+	logic	[2*K-1:0]		GT_rd_data_0, GT_rd_data_1;
 	
-	DPRAM #(.S(S), .K(K)) GarbledTables(
+	DPRAM #(.S(S-1), .K(2*K)) GarbledTables(
 		.clk(clk), .rst(rst), .clr(GT_clr),
 		.wr_en_0(GT_wr_en_0), .wr_en_1(GT_wr_en_1),
 		.wr_addr_0(GT_wr_addr_0), .wr_addr_1(GT_wr_addr_1),
@@ -217,13 +218,13 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 
 		GT_clr = cur_index_rst;
 		GT_wr_en_0 = OL_GT_wr_en_end;
-		GT_wr_en_1 = OL_GT_wr_en_end;
+		GT_wr_en_1 = 'b0;
 		GT_wr_addr_0 = 2*GT_wr_addr_end;
-		GT_wr_addr_1 = 2*GT_wr_addr_end+'d1;
-		GT_rd_addr_0 = 2*GT_ext_rd_addr;
-		GT_rd_addr_1 = 2*GT_ext_rd_addr+'d1;  
-		GT_wr_data_0 = t0;
-		GT_wr_data_1 = t1; 	
+		GT_wr_addr_1 = 'bz;
+		GT_rd_addr_0 = 'bz;
+		GT_rd_addr_1 = 2*GT_ext_rd_addr;  
+		GT_wr_data_0 = {t0, t1};
+		GT_wr_data_1 = 'bz; 	
 	end
 	
 	/*store output masks*/
@@ -460,13 +461,13 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 					data1 = in1_label;					
 				end
 				else begin
-					if(GT_rd_data_ready_0) begin
+					if(GT_rd_data_ready_1) begin
 						tag = 3'b010;
 						GT_ext_rd_inc = 'b1;
 						index0 = 2*GT_ext_rd_addr;
 						index1 = 2*GT_ext_rd_addr+'d1;
-						data0 = GT_rd_data_0;
-						data1 = GT_rd_data_1;
+						data0 = GT_rd_data_1[2*K-1:K];
+						data1 = GT_rd_data_1[K-1:0];
 					end
 				end
 			end

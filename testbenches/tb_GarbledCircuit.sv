@@ -37,10 +37,11 @@ module tb_GarbledCircuit;
 	always #50 clk = ~clk;
 	
 	integer f_N, f_IL, f_K, f_GT, f_M;
-	integer k, l, line, init_size, input_size, dff_size, output_size, gate_size, num_XOR;
+	integer k, l, line, cycles;
+	integer init_size, input_size, dff_size, output_size, gate_size, num_XOR;
 		
 	initial begin	
-		$display("starting simulation");
+		$display("Starting simulation");
 		
 		f_N = $fopen({LOC, NETLISTFILE},"r");
 		
@@ -57,6 +58,7 @@ module tb_GarbledCircuit;
 		
 		$fclose(f_N);
 		
+		cycles = 0;		
 		clk = 'b0;
 		rst = 'b1;	
 		start = 'b0;	
@@ -66,9 +68,12 @@ module tb_GarbledCircuit;
 		start = 'b1;
 		#100;		
 		start = 'b0;
+		
 		while(1) begin
+			cycles = cycles + 1;
 			@(posedge clk);
 			if(cid == CC)break;
+			
 			if(tag[2]) begin
 				if(tag[0]) InLabels[cid*input_size+index0] = data0;
 				if(tag[1]) InLabels[cid*input_size+index1] = data1;
@@ -110,7 +115,7 @@ module tb_GarbledCircuit;
 		$fclose(f_GT);
 		$fclose(f_M);
 		
-		$display("end simulation");
+		$display("Simulation ended in %d cycles", cycles);
 		$stop();	
 	end
 
