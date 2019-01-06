@@ -471,7 +471,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				if((cur_index == dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)) nextState = MASKS;
 			end
 			MASKS: begin
-				if(OM_index == output_size - 1) begin
+				if(OM_index == output_size) begin
 					cid_inc = 'b1;
 					cur_index_rst = 'b1;				
 					nextState = DFF;
@@ -537,7 +537,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				end
 			end
 			MASKS: begin
-				if(OM_index == output_size - 1) begin
+				if(OM_index == output_size) begin
 					tag = 3'b011;
 					data0 = OutputMask[0:K-1];
 					data1 = OutputMask[K:2*K-1];
