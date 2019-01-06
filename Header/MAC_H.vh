@@ -3,6 +3,8 @@
 `ifndef _MAC_H_
 `define _MAC_H_
 
+`include "../Header/TEMP_H.vh"
+
 function automatic integer log2;
 	input [31:0] value;
 	reg [31:0] temp;
@@ -73,9 +75,7 @@ parameter K = 128; //security parameter, bit-length of keys
 parameter S = 14; //width of gate id (or wire id), maximum number of gates = 2^S
 
 /*simulation files*/	
-parameter CC = 32;
-parameter LOC = "/home/siam/git/hostCPU_TG/hw_aclrtr/hamming/";
-parameter NETLISTFILE = "Netlist.txt";
+parameter NETLISTFILE = "Netlist.hscd";
 parameter KEYFILE = "Keys.txt";
 parameter LABELFILE = "Labels.txt";
 parameter MASKFILE = "OMasks.txt";

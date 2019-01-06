@@ -24,3 +24,4 @@ work/*
 *.map
 *.mem
 *.wcfg
+Header/TEMP_H.vh
