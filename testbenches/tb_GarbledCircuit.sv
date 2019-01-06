@@ -102,7 +102,7 @@ module tb_GarbledCircuit;
 			$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
 		end
 		for (l = 0; l < CC; l = l+1)
-			for (k = 0; k < output_size; k = k+1)
+			for (k = output_size-1; k >= 0; k = k-1)
 				$fwrite(f_M,"%b\n", OutputMask[l][k]);
 			
 		$fclose(f_IL);
