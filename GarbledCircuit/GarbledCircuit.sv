@@ -90,17 +90,20 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-1:0]	cur_index_1;
 	logic			cur_index_inc_1;
 	logic	[3:0]	g_logic_1;	
+	logic			is_output_1;
 	
 	always @(posedge clk or posedge rst) begin
 		if(rst) begin
 			cur_index_1 <= 'b0;
 			cur_index_inc_1 <= 'b0;
 			g_logic_1 <= 'b0;
+			is_output_1 <= 'b0;
 		end     
 		else begin
 			cur_index_1 <= cur_index;
 			cur_index_inc_1 <= cur_index_inc;
-			g_logic_1 <= g_logic;			
+			g_logic_1 <= g_logic;	
+			is_output_1 <= is_output;
 		end
 	end
 	
@@ -265,7 +268,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[2:0]		OM_beg, OM_end;
 	logic	[S-1:0]		OM_index;
 	
-	FIFO #(.N(3), .S(NR_AES+1)) OM(	//1 cycle extra for memory read delay
+	FIFO #(.N(3), .S(NR_AES)) OM(	//1 cycle extra for memory read delay
 		.clk(clk), .rst(rst),
 		.in(OM_beg),
 		.out(OM_end)
@@ -274,7 +277,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	always_comb begin
 		GC_mask = out_label[0];
 		XOR_mask_beg = XOR_label[0];
-		OM_inc_beg = is_output & cur_index_inc/*gid_inc*/;
+		OM_inc_beg = is_output_1 & cur_index_inc_1/*gid_inc*/;
 		OM_beg = {XOR_mask_beg, is_XORS, OM_inc_beg};
 		{XOR_mask_end, is_XOR_end, OM_inc_end} = OM_end;
 	end
@@ -373,7 +376,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		WAIT,
 		DFF,
 		GARBLE,
-		MASKS
+		MASKS,
+		RSTCOUNTERS
 	}state;
 	
 	state currState, nextState;	
@@ -489,14 +493,15 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				
 				OL_GT_wr_en_beg = cur_index_inc_1&(~(is_XORS|is_FF));		
 
-				if((cur_index == dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)) nextState = MASKS;
+				if((cur_index >= dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)&&(cur_index_inc == 'b1)) nextState = MASKS;
 			end
 			MASKS: begin
-				if(OM_index == output_size) begin
-					cid_inc = 'b1;
-					cur_index_rst = 'b1;				
-					nextState = DFF;
-				end
+				if(OM_index == output_size) nextState = RSTCOUNTERS;
+			end
+			RSTCOUNTERS:  begin
+				cid_inc = 'b1;
+				cur_index_rst = 'b1;				
+				nextState = DFF;
 			end
 		endcase
 	end
@@ -544,7 +549,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 			end	
 			OM_RD: begin
 				data0 = OutputMask[0:K-1];
-				data1 = GT_rd_data_1[K-1:0];
+				data1 = OutputMask[K:2*K-1];
 			end			
 		endcase
 	end
