@@ -24,12 +24,24 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	logic	[1:0]		en_LabelGen;
 	logic	[2*K-1:0]	key;
+	logic	[2*K-1:0]	CurrKeys[2];
 	
 	LabelGen #(.S(S), .K(K))LabelGen(
 		.clk(clk), .rst(rst),
 		.en(en_LabelGen),
 		.key(key)
     );
+	
+	always @(posedge clk or posedge rst) begin
+		if(rst) begin
+			CurrKeys[0] <= 'b0;
+			CurrKeys[1] <= 'b0;
+		end     
+		else begin
+			CurrKeys[0] <= key[K-1:0];
+			CurrKeys[1] <= key[2*K-1:K];
+		end
+	end
 	
 	/*load the netlist*/
 	
@@ -74,6 +86,26 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[K-1:0]	t0, t1;
 	logic	[K-1:0]	out_label;
 	
+	/*adjust timing for memory delay*/
+	logic	[S-1:0]	cur_index_1;
+	logic			cur_index_inc_1;
+	logic	[3:0]	g_logic_1;	
+	
+	always @(posedge clk or posedge rst) begin
+		if(rst) begin
+			cur_index_1 <= 'b0;
+			cur_index_inc_1 <= 'b0;
+			g_logic_1 <= 'b0;
+		end     
+		else begin
+			cur_index_1 <= cur_index;
+			cur_index_inc_1 <= cur_index_inc;
+			g_logic_1 <= g_logic;			
+		end
+	end
+	
+	assign gid = /*cur_index*/cur_index_1 - dff_size;
+	
 	KeyExpansion KeyExpansion (
 		.key(AES_key), 
 		.expandedKey(AES_expandedKey)
@@ -84,13 +116,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.R(R),
 		.AES_expandedKey(AES_expandedKey),		
 		.cid(cid), .gid(gid),
-		.g_logic(g_logic),
+		.g_logic(g_logic_1/*g_logic*/),
 		.in0_label(in0_label), .in1_label(in1_label),
 		.t0(t0), .t1(t1),
 		.out_label(out_label)
 	);
-	
-	assign gid = cur_index - dff_size;
 	
 	/*XORs and DFFs*/
 	
@@ -99,10 +129,10 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-1:0]	cur_num_XOR;
 		
 	always_comb begin
-		is_FF = (g_logic == DFFGATE);
-		is_NOT = (g_logic == NOTGATE);
-		is_XOR = (g_logic == XORGATE);
-		is_XNOR = (g_logic == XNORGATE);	
+		is_FF = (g_logic_1 == DFFGATE);
+		is_NOT = (g_logic_1 == NOTGATE);
+		is_XOR = (g_logic_1 == XORGATE);
+		is_XNOR = (g_logic_1 == XNORGATE);	
 		is_XORS = is_NOT|is_XOR|is_XNOR;
 		
 		if (is_NOT) XOR_label = in0_label^R;
@@ -116,7 +146,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic			[S-1:0]	OL_wr_addr_beg, OL_wr_addr_end;
 	logic	signed 	[S-1:0]	GT_wr_addr_beg, GT_wr_addr_end;
 	
-	FIFO #(.N(1), .S(NR_AES)) OL_GT_wr_en_0(	
+	FIFO #(.N(1), .S(NR_AES)) OL_GT_wr_en_0( 
 		.clk(clk), .rst(rst),
 		.in(OL_GT_wr_en_beg),
 		.out(OL_GT_wr_en_end)
@@ -197,20 +227,20 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	);	
 			
 	always_comb begin			
-		OL_wr_addr_beg = cur_index;
-		GT_wr_addr_beg = cur_index - dff_size - cur_num_XOR;
+		OL_wr_addr_beg = cur_index_1;
+		GT_wr_addr_beg = cur_index_1 - dff_size - cur_num_XOR;
 	
 		IL_clr = cur_index_rst;
 		IL_rd_addr_0 = in0+'d2; //first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
-		IL_wr_data_0 = in0_label;
-		IL_wr_data_1 = in1_label; 
+		IL_wr_data_0 = key[K-1:0]/*in0_label*/;
+		IL_wr_data_1 = key[2*K-1:K]/*in1_label*/; 
 
 		OL_clr = cur_index_rst;
 		OL_wr_en_0 = OL_GT_wr_en_end;
-		OL_wr_en_1 = (cur_index_inc&is_XORS)|is_FF;
+		OL_wr_en_1 = (cur_index_inc_1&is_XORS)|is_FF;
 		OL_wr_addr_0 = OL_wr_addr_end; 
-		OL_wr_addr_1 = cur_index; 
+		OL_wr_addr_1 = cur_index_1; 
 		OL_rd_addr_0 = in0-init_input_size;
 		OL_rd_addr_1 = in1-init_input_size;  
 		OL_wr_data_0 = out_label;
@@ -235,7 +265,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[2:0]		OM_beg, OM_end;
 	logic	[S-1:0]		OM_index;
 	
-	FIFO #(.N(3), .S(NR_AES)) OM(	
+	FIFO #(.N(3), .S(NR_AES+1)) OM(	//1 cycle extra for memory read delay
 		.clk(clk), .rst(rst),
 		.in(OM_beg),
 		.out(OM_end)
@@ -269,7 +299,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		else if(cur_index_inc & ~cur_index_overflow) cur_index <= cur_index + 'd1;
 		
 		if(rst|cur_index_rst) cur_num_XOR <= 0;
-		else if(cur_index_inc&is_XORS) cur_num_XOR <= cur_num_XOR + 'd1;
+		else if(cur_index_inc_1&is_XORS) cur_num_XOR <= cur_num_XOR + 'd1;
 		
 		if(rst|cur_index_rst) OM_index <= 0;
 		else if(OM_inc_end) OM_index <= OM_index + 'd1;
@@ -279,6 +309,62 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	end
 	
 	/*garble the netlist*/
+	
+	/*assign labels*/
+	
+	typedef enum{
+		NONE,
+		R_AES,
+		KEY_0,
+		KEY_1,
+		IL_0,
+		IL_1,
+		OL_0,
+		OL_1,
+		GT_RD,
+		OM_RD
+	}mem_id;
+	
+	mem_id DFF_mem_id, DFF_mem_id_1, in0_mem_id, in0_mem_id_1, in1_mem_id, in1_mem_id_1;
+	
+	always_ff @(posedge clk or posedge rst)
+		if(rst) begin
+			DFF_mem_id_1 <= NONE;
+			in0_mem_id_1 <= NONE;
+			in1_mem_id_1 <= NONE;
+		end
+		else begin
+			DFF_mem_id_1 <= DFF_mem_id;
+			in0_mem_id_1 <= in0_mem_id;
+			in1_mem_id_1 <= in1_mem_id;
+		end
+	
+	always_comb begin
+		case(DFF_mem_id_1)
+			KEY_0:	DFF_label = CurrKeys[0];
+			KEY_1:	DFF_label = CurrKeys[1];
+			IL_0:	DFF_label = IL_rd_data_0;
+			IL_1:	DFF_label = IL_rd_data_1;
+			OL_0:	DFF_label = OL_rd_data_0;
+			OL_1:	DFF_label = OL_rd_data_1;
+		endcase
+		case(in0_mem_id_1)
+			KEY_0:	in0_label = CurrKeys[0];
+			KEY_1:	in0_label = CurrKeys[1];
+			IL_0:	in0_label = IL_rd_data_0;
+			IL_1:	in0_label = IL_rd_data_1;
+			OL_0:	in0_label = OL_rd_data_0;
+			OL_1:	in0_label = OL_rd_data_1;
+		endcase
+		case(in1_mem_id_1)
+			KEY_0:	in1_label = CurrKeys[0];
+			KEY_1:	in1_label = CurrKeys[1];
+			IL_0:	in1_label = IL_rd_data_0;
+			IL_1:	in1_label = IL_rd_data_1;
+			OL_0:	in1_label = OL_rd_data_0;
+			OL_1:	in1_label = OL_rd_data_1;
+		endcase
+	end
 	
 	typedef enum{
 		IDLE,
@@ -315,8 +401,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				cur_index_rst = 'b1;		
 				R = 'b0; 
 				AES_key = 'b0; 
-				in0_label = 'b0;
-				in1_label = 'b0;
+				/*in0_label = 'b0;
+				in1_label = 'b0;*/
 				if(start == 'b1) nextState = GETKEYS;
 			end
 			GETKEYS: begin
@@ -333,8 +419,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				IL_wr_addr_0 = 'b0;
 				IL_wr_addr_1 = 'b1;
 				
-				in0_label = key[K-1:0];
-				in1_label = key[2*K-1:K];
+				/*in0_label = key[K-1:0];
+				in1_label = key[2*K-1:K];*/
 				
 				if(done_Netlist) begin
 					if(DFF_present) nextState = DFF;
@@ -362,18 +448,18 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				cur_index_inc = 'b1;
 				
 				if(cid == 'd0) begin
-					if ((in1 == CONSTZERO)||(in1 == CONSTONE)) DFF_label = IL_rd_data_1;
+					if ((in1 == CONSTZERO)||(in1 == CONSTONE)) DFF_mem_id = IL_1/*DFF_label = IL_rd_data_1*/;
 					else begin //generate init label and store in both InputLabels and OutputLabels
 						IL_wr_en_1 = ~IL_rd_data_ready_1; 
 						IL_wr_addr_1 = in1+'d2;
 						en_LabelGen = {IL_wr_en_1, 1'b0};
-						in1_label = key[2*K-1:K]; 
-						DFF_label = in1_label;
+						/*in1_label = key[2*K-1:K]*/; 
+						DFF_mem_id = KEY_1/*DFF_label = in1_label*/;
 					end
 				end
 				else begin
-					if ((in0 == CONSTZERO)||(in0 == CONSTONE)) DFF_label = IL_rd_data_0;
-					else DFF_label = OL_rd_data_0;
+					if ((in0 == CONSTZERO)||(in0 == CONSTONE)) DFF_mem_id = IL_0/*DFF_label = IL_rd_data_0*/;
+					else DFF_mem_id = OL_0/*DFF_label = OL_rd_data_0*/;
 				end
 				if(cur_index == dff_size-1) begin 
 					nextState = GARBLE;
@@ -390,18 +476,18 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				en_LabelGen = {IL_wr_en_1, IL_wr_en_0};
 				
 				if(in0F) begin
-					if(IL_rd_data_ready_0) in0_label = IL_rd_data_0;
-					else in0_label = key[K-1:0];
+					if(IL_rd_data_ready_0) in0_mem_id = IL_0/*in0_label = IL_rd_data_0*/;
+					else in0_mem_id = KEY_0/*in0_label = key[K-1:0]*/;
 				end
-				else in0_label = OL_rd_data_0;
+				else in0_mem_id = OL_0/*in0_label = OL_rd_data_0*/;
 				
 				if(in1F) begin
-					if(IL_rd_data_ready_1) in1_label = IL_rd_data_1;
-					else in1_label = key[2*K-1:K];
+					if(IL_rd_data_ready_1) in1_mem_id = IL_1/*in1_label = IL_rd_data_1*/;
+					else in1_mem_id = KEY_1/*in1_label = key[2*K-1:K]*/;
 				end
-				else in1_label = OL_rd_data_1;	
+				else in1_mem_id = OL_1/*in1_label = OL_rd_data_1*/;	
 				
-				OL_GT_wr_en_beg = cur_index_inc&(~is_XORS);		
+				OL_GT_wr_en_beg = cur_index_inc_1&(~(is_XORS|is_FF));		
 
 				if((cur_index == dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)) nextState = MASKS;
 			end
@@ -423,59 +509,105 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	001: keys		010: garbled table	011: masks
 	*/
 	
+	logic	[2:0]	tag_cur;
+	logic	[S-1:0]	index0_cur, index1_cur; 
+	mem_id data_mem_id, data_mem_id_1;
+	
+	always_ff @(posedge clk or posedge rst) begin
+		if(rst) begin
+			tag <= 'b0;
+			index0 <= -1;
+			index1 <= -1;
+			data_mem_id_1 <= NONE;
+		end
+		else begin
+			tag <= tag_cur;
+			index0 <= index0_cur;
+			index1 <= index1_cur;
+			data_mem_id_1 <= data_mem_id;
+		end
+	end	
+	
 	always_comb begin
-		tag = 'b000;
-		index0 = -1;
-		index1 = -1;
+		case(data_mem_id_1)
+			R_AES: begin
+				data0 = R;
+				data1 = AES_key;
+			end	
+			KEY_0: begin
+				data0 = CurrKeys[0];
+				data1 = CurrKeys[1];
+			end	
+			GT_RD: begin
+				data0 = GT_rd_data_1[2*K-1:K];
+				data1 = GT_rd_data_1[K-1:0];
+			end	
+			OM_RD: begin
+				data0 = OutputMask[0:K-1];
+				data1 = GT_rd_data_1[K-1:0];
+			end			
+		endcase
+	end
+	
+	always_comb begin
+		tag_cur = 'b000;
+		index0_cur = -1;
+		index1_cur = -1;
 		GT_ext_rd_inc = 'b0;
 		case(currState)
 			GETKEYS: begin
-				tag = 'b001;
-				data0 = R;
-				data1 = AES_key;
+				tag_cur = 'b001;
+				data_mem_id = R_AES;
+				/*data0 = R;
+				data1 = AES_key;*/
 			end				
 			CONSTLABELS: begin
-				tag = 'b111;
-				index0 = IL_wr_addr_0;
-				index1 = IL_wr_addr_1;
-				data0 = in0_label;
-				data1 = in1_label;
+				tag_cur = 'b111;
+				index0_cur = IL_wr_addr_0;
+				index1_cur = IL_wr_addr_1;
+				data_mem_id = KEY_0; //KEY_0 and KEY_1 equivalent in this case
+				/*data0 = in0_label;
+				data1 = in1_label;*/
 			end		
 			WAIT: begin
 			end		
 			DFF: begin	
 				if(|en_LabelGen) begin
-					tag = {1'b1, en_LabelGen};
-					index0 = IL_wr_addr_0;
-					index1 = IL_wr_addr_1;	
-					data0 = in0_label;
-					data1 = in1_label;					
+					tag_cur = {1'b1, en_LabelGen};
+					index0_cur = IL_wr_addr_0;
+					index1_cur = IL_wr_addr_1;
+					data_mem_id = KEY_0; //KEY_0 and KEY_1 equivalent in this case	
+					/*data0 = in0_label;
+					data1 = in1_label;	*/				
 				end
 			end			
 			GARBLE: begin
 				if(|en_LabelGen) begin
-					tag = {1'b1, en_LabelGen};
-					index0 = IL_wr_addr_0;
-					index1 = IL_wr_addr_1;	
-					data0 = in0_label;
-					data1 = in1_label;					
+					tag_cur = {1'b1, en_LabelGen};
+					index0_cur = IL_wr_addr_0;
+					index1_cur = IL_wr_addr_1;
+					data_mem_id = KEY_0; //KEY_0 and KEY_1 equivalent in this case		
+					/*data0 = in0_label;
+					data1 = in1_label;*/					
 				end
 				else begin
 					if(GT_rd_data_ready_1) begin
-						tag = 3'b010;
+						tag_cur = 3'b010;
 						GT_ext_rd_inc = 'b1;
-						index0 = 2*GT_ext_rd_addr;
-						index1 = 2*GT_ext_rd_addr+'d1;
-						data0 = GT_rd_data_1[2*K-1:K];
-						data1 = GT_rd_data_1[K-1:0];
+						index0_cur = 2*GT_ext_rd_addr;
+						index1_cur = 2*GT_ext_rd_addr+'d1;
+						data_mem_id = GT_RD; //KEY_0 and KEY_1 equivalent in this case	
+						/*data0 = GT_rd_data_1[2*K-1:K];
+						data1 = GT_rd_data_1[K-1:0];*/
 					end
 				end
 			end
 			MASKS: begin
 				if(OM_index == output_size) begin
-					tag = 3'b011;
-					data0 = OutputMask[0:K-1];
-					data1 = OutputMask[K:2*K-1];
+					tag_cur = 3'b011;
+					data_mem_id = OM_RD;
+					/*data0 = OutputMask[0:K-1];
+					data1 = OutputMask[K:2*K-1];*/
 				end
 			end
 		endcase

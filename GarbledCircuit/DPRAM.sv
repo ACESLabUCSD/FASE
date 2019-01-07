@@ -17,12 +17,14 @@ module DPRAM #(parameter S = 20, K = 128)(
 		$readmemh(ZEROFILE, DPRAM);
 	end
 	
-	always_comb  begin
+	/*always_comb  begin
 		rd_data_0 = DPRAM[rd_addr_0];
 		rd_data_1 = DPRAM[rd_addr_1];
-	end
+	end*/
 
 	always_ff @(posedge clk or posedge rst) begin
+		rd_data_0 <= DPRAM[rd_addr_0];
+		rd_data_1 <= DPRAM[rd_addr_1];
 		if (wr_en_0) DPRAM[wr_addr_0] <= wr_data_0; 
 		if (wr_en_1) DPRAM[wr_addr_1] <= wr_data_1; 
 	end
