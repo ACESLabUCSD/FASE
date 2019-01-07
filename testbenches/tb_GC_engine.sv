@@ -23,8 +23,8 @@ module tb_GC_engine;
 	logic	[K-1:0]	in0_label, in1_label;
 	logic	[K-1:0]	out_label;
 	logic	[K-1:0]	out_label_ref;
-	logic	[K-1:0]	t0, t1;
-	logic	[K-1:0]	t0_ref, t1_ref;
+	logic	[K-1:0]	gt_row_0, gt_row_1;
+	logic	[K-1:0]	gt_row_0_ref, gt_row_1_ref;
 	
 	KeyExpansion e (
 		.key(AES_key), 
@@ -38,7 +38,7 @@ module tb_GC_engine;
 		.cid(cid), .gid(gid),
 		.g_logic(g_logic),
 		.in0_label(in0_label), .in1_label(in1_label),
-		.t0(t0), .t1(t1),
+		.gt_row_0(gt_row_0), .gt_row_1(gt_row_1),
 		.out_label(out_label)
 	);	
 	
@@ -49,7 +49,7 @@ module tb_GC_engine;
 	logic	[S-1:0]	IN1 [0:num_gates-1]; 
 	logic	[3:0]	G_LOGICS [0:num_gates-1]; 
 	logic	[K-1:0]	IN_LABELS [0:2*num_gates+1]; 
-	logic	[K-1:0]	T_REF [0:2*num_gates-1];
+	logic	[K-1:0]	GT_REF [0:2*num_gates-1];
 	logic	[K-1:0]	OUT_LABELS_REF [0:2*num_gates-1];
 	
 	logic	[S-1:0]	in0, in1;
@@ -73,7 +73,7 @@ module tb_GC_engine;
 		$readmemh(IN0FILE, IN0);
 		$readmemh(IN1FILE, IN1);
 		$readmemh(LOGICFILE, G_LOGICS);
-		$readmemh(TABLEFILE, T_REF);
+		$readmemh(TABLEFILE, GT_REF);
 		$readmemh(OLABELFILE, OUT_LABELS_REF);
 		
 		clk = 'b0;
@@ -105,16 +105,16 @@ module tb_GC_engine;
 			end
 			if(l > NR_AES) begin
 				m = l-NR_AES-1;
-				t0_ref = T_REF[2*(m-X[m])];
-				t1_ref = T_REF[2*(m-X[m])+1];	
+				gt_row_0_ref = GT_REF[2*(m-X[m])];
+				gt_row_1_ref = GT_REF[2*(m-X[m])+1];	
 				out_label_ref = OUT_LABELS_REF[2*(m)];
 				
-				$display("\ngate id = %d\nout_label = %x \nt0 = %x \nt1 = %x", m, out_label, t0, t1);				
+				$display("\ngate id = %d\nout_label = %x \nt0 = %x \nt1 = %x", m, out_label, gt_row_0, gt_row_1);				
 				g_logic = G_LOGICS[m];
 				if ((g_logic == XORGATE)|(g_logic == XNORGATE)|(g_logic == NOTGATE)) $display("XOR gate");
 				else begin
-					assert((out_label == out_label_ref) && (t0 == t0_ref) && (t1 == t1_ref)) $display("Pass");
-					else $error("Correct Values: \nout_label = %x \nt0 = %x \nt1 = %x", out_label_ref, t0_ref, t1_ref);	
+					assert((out_label == out_label_ref) && (gt_row_0 == gt_row_0_ref) && (gt_row_1 == gt_row_1_ref)) $display("Pass");
+					else $error("Correct Values: \nout_label = %x \nt0 = %x \nt1 = %x", out_label_ref, gt_row_0_ref, gt_row_1_ref);	
 				end
 			end
 		end		

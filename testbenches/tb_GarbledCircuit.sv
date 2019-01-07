@@ -18,15 +18,15 @@
 module tb_GarbledCircuit;
 	
 	logic			clk, rst, start;	
-	logic	[2:0]	tag;
-	logic	[S-1:0]	cid, index0, index1; 
-	logic	[K-1:0]	data0, data1;	
+	logic	[2:0]	tag_t1;
+	logic	[S-1:0]	cid, index0_t1, index1_t1; 
+	logic	[K-1:0]	data0_t1, data1_t1;	
 	
 	GarbledCircuit  #(.S(S), .K(K)) uut (  
 		.clk(clk), .rst(rst), .start(start),
-		.tag(tag),
-		.cid(cid), .index0(index0), .index1(index1), 
-        .data0(data0), .data1(data1)
+		.tag_t1(tag_t1),
+		.cid(cid), .index0_t1(index0_t1), .index1_t1(index1_t1), 
+        .data0_t1(data0_t1), .data1_t1(data1_t1)
 	);	
 	
 	logic	[K-1:0]	Keys [0:1];
@@ -74,21 +74,21 @@ module tb_GarbledCircuit;
 			@(posedge clk);
 			if(cid == CC)break;
 			
-			if(tag[2]) begin
-				if(tag[0]) InLabels[cid*input_size+index0] = data0;
-				if(tag[1]) InLabels[cid*input_size+index1] = data1;
+			if(tag_t1[2]) begin
+				if(tag_t1[0]) InLabels[cid*input_size+index0_t1] = data0_t1;
+				if(tag_t1[1]) InLabels[cid*input_size+index1_t1] = data1_t1;
 			end
 			else begin
-				if(tag[1:0] == 2'b01) begin
-					Keys[0] = data0;
-					Keys[1] = data1;					
+				if(tag_t1[1:0] == 2'b01) begin
+					Keys[0] = data0_t1;
+					Keys[1] = data1_t1;					
 				end
-				else if(tag[1:0] == 2'b10) begin
-					GarbledTables[2*cid*(gate_size-num_XOR)+index0] = data0;
-					GarbledTables[2*cid*(gate_size-num_XOR)+index1] = data1;				
+				else if(tag_t1[1:0] == 2'b10) begin
+					GarbledTables[2*cid*(gate_size-num_XOR)+index0_t1] = data0_t1;
+					GarbledTables[2*cid*(gate_size-num_XOR)+index1_t1] = data1_t1;				
 				end
-				else if(tag[1:0] == 2'b11) begin
-					OutputMask[cid] = data0;	
+				else if(tag_t1[1:0] == 2'b11) begin
+					OutputMask[cid] = data0_t1;	
 				end
 			end
 		end	

@@ -23,7 +23,7 @@ module GC_engine #(parameter S=20, K=128 )(
 	input			[S-1:0]	cid, gid,
 	input			[3:0]	g_logic,
 	input			[K-1:0]	in0_label, in1_label,
-	output	logic	[K-1:0]	t0, t1, out_label
+	output	logic	[K-1:0]	gt_row_0, gt_row_1, out_label
 );
 
 	logic	[K-1:0]	in0_label_R, in1_label_R;
@@ -168,11 +168,11 @@ module GC_engine #(parameter S=20, K=128 )(
 		pa = A0_end[0];
 		pb = B0_end[0];
 	
-		t0 = (pb)?(mask_key0 ^ mask_key1 ^ R):(mask_key0 ^ mask_key1);
-		t1 = mask_key2 ^ mask_key3 ^ A0_end;
+		gt_row_0 = (pb)?(mask_key0 ^ mask_key1 ^ R):(mask_key0 ^ mask_key1);
+		gt_row_1 = mask_key2 ^ mask_key3 ^ A0_end;
 	
-		G = (pa)?(mask_key0 ^ t0):(mask_key0);
-		E = (pb)?(mask_key2 ^ t1 ^ A0_end):(mask_key2);
+		G = (pa)?(mask_key0 ^ gt_row_0):(mask_key0);
+		E = (pb)?(mask_key2 ^ gt_row_1 ^ A0_end):(mask_key2);
 		
 		if (v_end[2]) begin
 			C0 = G^E^R;
