@@ -246,10 +246,10 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		GT_clr = cur_index_rst;
 		GT_wr_en_0_t1 = OL_GT_wr_en_end_t1;
 		GT_wr_en_1_t1 = 'b0;
-		GT_wr_addr_0_t1 = 2*GT_wr_addr_end_t1;
+		GT_wr_addr_0_t1 = GT_wr_addr_end_t1;
 		GT_wr_addr_1_t1 = 'bz;
 		GT_rd_addr_0 = 'bz;
-		GT_rd_addr_1 = 2*GT_ext_rd_addr;  
+		GT_rd_addr_1 = GT_ext_rd_addr;  
 		GT_wr_data_0_t1 = {gt_row_0_t1, gt_row_1_t1};
 		GT_wr_data_1_t1 = 'bz; 	
 	end
