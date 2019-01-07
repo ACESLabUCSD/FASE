@@ -173,6 +173,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-1:0]		IL_wr_addr_0, IL_wr_addr_1;
 	logic	[S-1:0]		IL_rd_addr_0, IL_rd_addr_1;  
 	logic	[K-1:0]		IL_wr_data_0, IL_wr_data_1; 
+	logic				IL_busy_0, IL_busy_1; 
 	logic				IL_rd_data_ready_0, IL_rd_data_ready_1; 
 	logic	[K-1:0]		IL_rd_data_0_t1, IL_rd_data_1_t1;
 	
@@ -182,6 +183,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.wr_addr_0(IL_wr_addr_0), .wr_addr_1(IL_wr_addr_1),
 		.rd_addr_0(IL_rd_addr_0), .rd_addr_1(IL_rd_addr_1),  
 		.wr_data_0(IL_wr_data_0), .wr_data_1(IL_wr_data_1), 
+		.busy_0(IL_busy_0), .busy_1(IL_busy_1),
 		.rd_data_ready_0(IL_rd_data_ready_0), .rd_data_ready_1(IL_rd_data_ready_1),
 		.rd_data_0(IL_rd_data_0_t1), .rd_data_1(IL_rd_data_1_t1)
 	);
@@ -191,6 +193,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-1:0]		OL_wr_addr_0_t1, OL_wr_addr_1_t1;
 	logic	[S-1:0]		OL_rd_addr_0, OL_rd_addr_1;  
 	logic	[K-1:0]		OL_wr_data_0_t1, OL_wr_data_1_t1; 
+	logic				OL_busy_0, OL_busy_1; 
 	logic				OL_rd_data_ready_0, OL_rd_data_ready_1;
 	logic	[K-1:0]		OL_rd_data_0_t1, OL_rd_data_1_t1;
 	
@@ -200,6 +203,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.wr_addr_0(OL_wr_addr_0_t1), .wr_addr_1(OL_wr_addr_1_t1),
 		.rd_addr_0(OL_rd_addr_0), .rd_addr_1(OL_rd_addr_1),  
 		.wr_data_0(OL_wr_data_0_t1), .wr_data_1(OL_wr_data_1_t1), 
+		.busy_0(OL_busy_0), .busy_1(OL_busy_1), 
 		.rd_data_ready_0(OL_rd_data_ready_0), .rd_data_ready_1(OL_rd_data_ready_1),
 		.rd_data_0(OL_rd_data_0_t1), .rd_data_1(OL_rd_data_1_t1)
 	);
@@ -210,6 +214,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	logic	[S-2:0]			GT_wr_addr_0_t1, GT_wr_addr_1_t1;
 	logic	[S-2:0]			GT_rd_addr_0, GT_rd_addr_1;  
 	logic	[2*K-1:0]		GT_wr_data_0_t1, GT_wr_data_1_t1;
+	logic					GT_busy_0, GT_busy_1; 
 	logic					GT_rd_data_ready_0, GT_rd_data_ready_1; 
 	logic	[2*K-1:0]		GT_rd_data_0_t1, GT_rd_data_1_t1;
 	
@@ -219,6 +224,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 		.wr_addr_0(GT_wr_addr_0_t1), .wr_addr_1(GT_wr_addr_1_t1),
 		.rd_addr_0(GT_rd_addr_0), .rd_addr_1(GT_rd_addr_1),  
 		.wr_data_0(GT_wr_data_0_t1), .wr_data_1(GT_wr_data_1_t1), 
+		.busy_0(GT_busy_0), .busy_1(GT_busy_1), 
 		.rd_data_ready_0(GT_rd_data_ready_0), .rd_data_ready_1(GT_rd_data_ready_1),
 		.rd_data_0(GT_rd_data_0_t1), .rd_data_1(GT_rd_data_1_t1)
 	);	
@@ -443,7 +449,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				CONSTZERO = -2, CONSTONE = -3, IL_rd_addr_0 = in0+'d2, IL_rd_addr_1 = in1+'d2, 
 				labels for CONSTZERO and CONSTONE are saved in locations 0 and 1 respectively of InputLabels*/
 				
-				cur_index_inc = 'b1;
+				cur_index_inc = 'b1; //writing through port 1 and reading from port 0, no conflict
 				
 				if(cid == 'd0) begin
 					if ((in1 == CONSTZERO)||(in1 == CONSTONE)) DFF_mem_id = IL_1;
@@ -463,7 +469,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				end
 			end		
 			GARBLE: begin				
-				cur_index_inc = (in0F|OL_rd_data_ready_0) & (in1F|OL_rd_data_ready_1);
+				cur_index_inc = (in0F|(OL_rd_data_ready_0&~OL_busy_0)) & (in1F|(OL_rd_data_ready_1&~OL_busy_1));
 			
 				IL_wr_en_0 = in0F & ~IL_rd_data_ready_0;
 				IL_wr_en_1 = in1F & ~IL_rd_data_ready_1 & ~((g_logic == NOTGATE)); //is_NOT_t1 is not matched in time
