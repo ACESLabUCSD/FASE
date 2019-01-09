@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `include "../Header/MAC_H.vh"
 
-`ifdef SIM
+`ifndef SIM
 module LabelGen #(parameter S = 20, K = 128)(
     input 				clk, rst,
     input 	[1:0]		en,

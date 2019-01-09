@@ -14,8 +14,9 @@
 
 `include "../Header/MAC_H.vh"
 
-module GarbledCircuit #(parameter S = 20, K = 128)(	
-	input			clk, rst, start,
+module GarbledCircuit #(parameter S = 14, K = 128)(	
+	input					clk, rst, start,
+	input			[31:0]	netlist_in,
 	output	logic	[2:0]	tag_t1,
 	output	logic	[S-1:0]	cid, index0_t1, index1_t1, 
 	output	logic	[K-1:0]	data0_t1, data1_t1	
@@ -60,6 +61,7 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 	
 	Netlist #(.S(S)) Netlist(
 		.clk(clk), .rst(rst), .start(start),
+		.netlist_in(netlist_in),
 		.rd_addr(NL_rd_addr),
 		.done(done_Netlist),
 		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), 
@@ -410,8 +412,11 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				cur_index_rst = 'b1;		
 				R = 'b0; 
 				AES_key = 'b0; 
-				if(start == 'b1) nextState = GETKEYS;
-			end
+				if(start == 'b1) nextState = WAIT;
+			end	
+			WAIT: begin
+				if(done_Netlist) nextState = GETKEYS;
+			end	
 			GETKEYS: begin
 				en_LabelGen = 'b11;
 				R = {key[K-1:1], 1'b1}; //last bit of R is always 1
@@ -426,17 +431,8 @@ module GarbledCircuit #(parameter S = 20, K = 128)(
 				IL_wr_addr_0 = 'b0;
 				IL_wr_addr_1 = 'b1;
 				
-				if(done_Netlist) begin
-					if(DFF_present) nextState = DFF;
-					else nextState = GARBLE;
-				end
-				else nextState = WAIT;
-			end		
-			WAIT: begin
-				if(done_Netlist) begin
-					if(DFF_present) nextState = DFF;
-					else nextState = GARBLE;
-				end
+				if(DFF_present) nextState = DFF;
+				else nextState = GARBLE;
 			end		
 			DFF: begin				
 				/*at each access a DFF needs only one input label. 

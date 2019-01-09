@@ -66,7 +66,7 @@ if { $::argc > 0 } {
 set orig_proj_dir "[file normalize "$origin_dir/"]"
 
 # Create project
-create_project $project_name -part xc7s50csga324-1
+create_project $project_name -part xcvu095-ffva2104-2-e
 
 # Set the directory path for the new project
 set proj_dir [get_property directory [current_project]]
@@ -76,13 +76,14 @@ set proj_dir [get_property directory [current_project]]
 
 # Set project properties
 set obj [current_project]
+set_property -name "board_part" -value "xilinx.com:vcu108:part0:1.3" -objects $obj
 set_property -name "default_lib" -value "xil_defaultlib" -objects $obj
 set_property -name "ip_cache_permissions" -value "read write" -objects $obj
 set_property -name "ip_output_repo" -value "$proj_dir/${project_name}.cache/ip" -objects $obj
-set_property -name "part" -value "xc7s50csga324-1" -objects $obj
 set_property -name "sim.ip.auto_export_scripts" -value "1" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
 set_property -name "source_mgmt_mode" -value "DisplayOnly" -objects $obj
+set_property -name "xpm_libraries" -value "XPM_MEMORY" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sources_1] ""]} {
@@ -108,7 +109,6 @@ set files [list \
  "[file normalize "$origin_dir/../../GarbledCircuit/Netlist.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/DPRAM.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/SBFRAM.sv"]"\
- "[file normalize "$origin_dir/../../Header/TEMP_H.vh"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -193,11 +193,6 @@ set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
 
-set file "$origin_dir/../../Header/TEMP_H.vh"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
-set_property -name "file_type" -value "Verilog Header" -objects $file_obj
-
 
 # Set 'sources_1' fileset file properties for local files
 # None
@@ -207,6 +202,34 @@ set obj [get_filesets sources_1]
 set_property -name "generic" -value "LOC=\"/home/siam/git/hostCPU_TG/hw_aclrtr/mix_logic/\"" -objects $obj
 set_property -name "top" -value "GarbledCircuit" -objects $obj
 
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+# Import local files from the original project
+set files [list \
+ "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_0/blk_mem_gen_0.xci"]"\
+]
+set imported_files [import_files -fileset sources_1 $files]
+
+# Set 'sources_1' fileset file properties for remote files
+# None
+
+# Set 'sources_1' fileset file properties for local files
+# None
+
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+# Import local files from the original project
+set files [list \
+ "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_1/blk_mem_gen_1.xci"]"\
+]
+set imported_files [import_files -fileset sources_1 $files]
+
+# Set 'sources_1' fileset file properties for remote files
+# None
+
+# Set 'sources_1' fileset file properties for local files
+# None
+
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
   create_fileset -constrset constrs_1
@@ -215,7 +238,13 @@ if {[string equal [get_filesets -quiet constrs_1] ""]} {
 # Set 'constrs_1' fileset object
 set obj [get_filesets constrs_1]
 
-# Empty (no sources present)
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../../GarbledCircuit/GarbledCircuitConstraints.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../../GarbledCircuit/GarbledCircuitConstraints.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property -name "file_type" -value "XDC" -objects $file_obj
 
 # Set 'constrs_1' fileset properties
 set obj [get_filesets constrs_1]
@@ -231,14 +260,26 @@ set files [list \
  "[file normalize "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"]"\
  "[file normalize "$origin_dir/../../testbenches/Rand.txt"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/Zeros.txt"]"\
+ "[file normalize "$origin_dir/../../Header/TEMP_H.vh"]"\
 ]
 add_files -norecurse -fileset $obj $files
+
+# Import local files from the original project
+set files [list \
+ "[file normalize "$origin_dir/tb_GarbledCircuit_behav.wcfg"]"\
+]
+set imported_files [import_files -fileset sim_1 $files]
 
 # Set 'sim_1' fileset file properties for remote files
 set file "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
+
+set file "$origin_dir/../../Header/TEMP_H.vh"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
+set_property -name "file_type" -value "Verilog Header" -objects $file_obj
 
 
 # Set 'sim_1' fileset file properties for local files
@@ -251,13 +292,12 @@ set_property -name "xsim.simulate.runtime" -value "4000ns" -objects $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {
-  create_run -name synth_1 -part xc7s50csga324-1 -flow {Vivado Synthesis 2017} -strategy "Vivado Synthesis Defaults" -constrset constrs_1
+  create_run -name synth_1 -part xcvu095-ffva2104-2-e -flow {Vivado Synthesis 2017} -strategy "Vivado Synthesis Defaults" -constrset constrs_1
 } else {
   set_property strategy "Vivado Synthesis Defaults" [get_runs synth_1]
   set_property flow "Vivado Synthesis 2017" [get_runs synth_1]
 }
 set obj [get_runs synth_1]
-set_property -name "part" -value "xc7s50csga324-1" -objects $obj
 set_property -name "report_strategy" -value "Vivado Synthesis Default Reports" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
@@ -278,13 +318,12 @@ current_run -synthesis [get_runs synth_1]
 
 # Create 'impl_1' run (if not found)
 if {[string equal [get_runs -quiet impl_1] ""]} {
-  create_run -name impl_1 -part xc7s50csga324-1 -flow {Vivado Implementation 2017} -strategy "Vivado Implementation Defaults" -constrset constrs_1 -parent_run synth_1
+  create_run -name impl_1 -part xcvu095-ffva2104-2-e -flow {Vivado Implementation 2017} -strategy "Vivado Implementation Defaults" -constrset constrs_1 -parent_run synth_1
 } else {
   set_property strategy "Vivado Implementation Defaults" [get_runs impl_1]
   set_property flow "Vivado Implementation 2017" [get_runs impl_1]
 }
 set obj [get_runs impl_1]
-set_property -name "part" -value "xc7s50csga324-1" -objects $obj
 set_property -name "report_strategy" -value "Vivado Implementation Default Reports" -objects $obj
 set_property -name "strategy" -value "Vivado Implementation Defaults" -objects $obj
 set_property -name "steps.write_bitstream.args.readback_file" -value "0" -objects $obj

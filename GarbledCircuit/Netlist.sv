@@ -1,31 +1,74 @@
 `include "../Header/MAC_H.vh"
 
-module Netlist #(parameter S = 20)(
-	input								clk, rst, start,
-	input					[S-1:0]		rd_addr,
-	output	logic						done,
-	output	logic	signed	[S-1:0]		init_size, input_size, dff_size, output_size, gate_size, num_XOR,
-	output								in0F, in1F, //1 if they are inputs of the circuit
-	output	logic	signed	[S-1:0]		in0, in1,
-	output	logic			[3:0]		g_logic,
-	output	logic						is_output //1 if gate output is output of the circuit
+module Netlist #(parameter S = 14)(
+	input							clk, rst, start,
+	input					[31:0]	netlist_in,
+	input					[S-1:0]	rd_addr,
+	output	logic					done,
+	output	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR,
+	output	logic					in0F, in1F, //1 if they are inputs of the circuit
+	output	logic	signed	[S-1:0]	in0, in1,
+	output	logic			[3:0]	g_logic,
+	output	logic					is_output //1 if gate output is output of the circuit
 );
 
+	/*memory to store the circuit*/
+	
+	logic			wr_en;
+	logic	[S-1:0]	addr, wr_addr;
+	logic	[31:0]	line;
+	
 	logic	[31:0]	Netlist [0:2**S-1]; 		
 	initial begin
-		$readmemh({LOC, NETLISTFILE}, Netlist);
+		$readmemh("Zeros.txt", Netlist);
 	end
 	
-	logic	[S-1:0]	index;
-	logic	[31:0]	line;
-	assign line = Netlist[index];	
+	always_ff @(posedge clk or posedge rst) begin		
+		if(rst) wr_addr <= 0;
+		else if(wr_en) wr_addr <= wr_addr + 'd1;
+	end
+	
+	assign addr = wr_en? wr_addr : rd_addr+'d4;
+	assign line = Netlist[addr];
+
+	always_ff @(posedge clk or posedge rst) begin
+		if(rst) Netlist[addr] <= 'b0;
+		else if(wr_en) Netlist[addr] <= netlist_in;
+	end
+	
+	/*register file to store the circuit parameters*/
+	
+	logic			CP_wr_en; 
+	
+	logic	[31:0]	CircuitParams [0:3]; 		
+	initial begin
+		$readmemh("Zeros.txt", CircuitParams);
+	end	
+	
+	always_ff @(posedge clk or posedge rst) begin
+		if(rst) CircuitParams[addr] <= 'b0;
+		else if(CP_wr_en) CircuitParams[addr] <= netlist_in;
+	end
+	
+	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
+	
+	always_comb begin
+		init_size = CircuitParams[0][2*S-1:S]+CircuitParams[0][S-1:0]; 
+		input_size = CircuitParams[1][2*S-1:S]+CircuitParams[1][S-1:0]; 
+		output_size = CircuitParams[2][S-1:0]; 
+		dff_size = CircuitParams[2][2*S-1:S]; 
+		gate_size = CircuitParams[3][S-1:0]; 
+		num_XOR = CircuitParams[3][2*S-1:S];
+		
+		init_input_size = init_size + input_size;
+		dff_gate_size = dff_size + gate_size;
+		in0F = (in0 < init_input_size)? 'b1 : 'b0;
+		in1F = (in1 < init_input_size)? 'b1 : 'b0;
+	end
 	
 	typedef enum{
 		IDLE,
-		INIT,
-		INPUT,
-		OUTPUT,
-		GATE,
+		STORE,
 		GARBLE
 	}state;
 	
@@ -37,45 +80,30 @@ module Netlist #(parameter S = 20)(
 		
 	always_comb begin	
 		done = 'b0;
+		wr_en = 'b0;
+		CP_wr_en = 'b0;
 		is_output = 'b0;
 		g_logic = 'b0;
 		in1 = -'d1;
 		in0 = -'d1;
 		nextState = currState;
 		case(currState)
-			IDLE: begin
-				init_size = 'd0; 
-				input_size = 'd0; 
-				dff_size = 'd0; 
-				output_size = 'd0; 
-				gate_size = 'd0; 
-				if(start == 'b1) nextState = INIT;
-			end				
-			INIT: begin
-				index = 'd0;
-				init_size = line[2*S-1:S]+line[S-1:0];
-				nextState = INPUT;
-			end				
-			INPUT: begin
-				index = 'd1;
-				input_size = line[2*S-1:S]+line[S-1:0];
-				nextState = OUTPUT;
-			end				
-			OUTPUT: begin
-				index = 'd2;
-				output_size = line[S-1:0];
-				dff_size = line[2*S-1:S];
-				nextState = GATE;
-			end				
-			GATE: begin
-				index = 'd3;
-				gate_size = line[S-1:0];
-				num_XOR = line[2*S-1:S];
-				done = 'b1;
-				nextState = GARBLE;
+			IDLE: begin 
+				if(start == 'b1) begin
+					wr_en = 'b1;
+					CP_wr_en = 'b1;
+					nextState = STORE;
+				end
+			end					
+			STORE: begin
+				wr_en = 'b1;
+				CP_wr_en = (wr_addr < 'd4);
+				if(wr_addr == dff_size + gate_size + 'd4) begin
+					done = 'b1;
+					nextState = GARBLE;
+				end
 			end				
 			GARBLE: begin
-				index = rd_addr+'d4;
 				is_output = line[0];
 				g_logic = line[4:1];
 				in1 = line[S+4:5];
@@ -84,10 +112,5 @@ module Netlist #(parameter S = 20)(
 			
 		endcase
 	end
-	
-	logic	signed	[S-1:0]	init_input_dff_size;
-	assign init_input_dff_size = init_size + input_size;
-	assign in0F = (in0 < init_input_dff_size)? 'b1 : 'b0;
-	assign in1F = (in1 < init_input_dff_size)? 'b1 : 'b0;
 	
 endmodule

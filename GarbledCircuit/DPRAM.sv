@@ -11,11 +11,11 @@ module DPRAM #(parameter S = 20, K = 128)(
 	output	logic	[K-1:0]	rd_data_0, rd_data_1
 );
 
-	localparam ZEROFILE = "Zeros.txt";
+	/*localparam ZEROFILE = "Zeros.txt";
 	logic	[K-1:0]	DPRAM [0:2**S-1];
 	initial begin
 		$readmemh(ZEROFILE, DPRAM);
-	end
+	end*/
 	
 	logic	[S-1:0]	addr_0, addr_1;
 	
@@ -26,12 +26,51 @@ module DPRAM #(parameter S = 20, K = 128)(
 		addr_1 = wr_en_1? wr_addr_1:rd_addr_1;
 	end
 
-	always_ff @(posedge clk or posedge rst) begin
-		rd_data_0 <= DPRAM[addr_0];
-		rd_data_1 <= DPRAM[addr_1];
-		if (wr_en_0) DPRAM[addr_0] <= wr_data_0; 
-		if (wr_en_1) DPRAM[addr_1] <= wr_data_1; 
-	end
+	generate	
+		if(K == 128) begin: K_128
+			blk_mem_gen_0 blk_mem(
+				.clka(clk),    // input wire clka
+				.wea(wr_en_0),      // input wire [0 : 0] wea
+				.addra(addr_0),  // input wire [13 : 0] addra
+				.dina(wr_data_0),    // input wire [127 : 0] dina
+				.douta(rd_data_0),  // output wire [127 : 0] douta
+				.clkb(clk),    // input wire clkb
+				.web(wr_en_1),      // input wire [0 : 0] web
+				.addrb(addr_1),  // input wire [13 : 0] addrb
+				.dinb(wr_data_1),    // input wire [127 : 0] dinb
+				.doutb(rd_data_1)  // output wire [127 : 0] doutb
+			);
+		end
+		else begin: K_256
+			blk_mem_gen_1 blk_mem(
+				.clka(clk),    // input wire clka
+				.wea(wr_en_0),      // input wire [0 : 0] wea
+				.addra(addr_0),  // input wire [13 : 0] addra
+				.dina(wr_data_0),    // input wire [127 : 0] dina
+				.douta(rd_data_0),  // output wire [127 : 0] douta
+				.clkb(clk),    // input wire clkb
+				.web(wr_en_1),      // input wire [0 : 0] web
+				.addrb(addr_1),  // input wire [13 : 0] addrb
+				.dinb(wr_data_1),    // input wire [127 : 0] dinb
+				.doutb(rd_data_1)  // output wire [127 : 0] doutb
+			);
+		end
+	endgenerate
+
+	/*always_ff @(posedge clk or posedge rst) begin
+		if(rst) begin
+			if (wr_en_0) DPRAM[addr_0] <= 'b0; 
+			else rd_data_0 <= 'b0;
+			if (wr_en_1) DPRAM[addr_1] <= 'b0; 
+			else rd_data_1 <= 'b0;
+		end
+		else begin
+			if (wr_en_0) DPRAM[addr_0] <= wr_data_0; 
+			else rd_data_0 <= DPRAM[addr_0];
+			if (wr_en_1) DPRAM[addr_1] <= wr_data_1;
+			else rd_data_1 <= DPRAM[addr_1]; 
+		end
+	end*/
 	
 	/*flag*/
 	

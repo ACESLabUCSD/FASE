@@ -13,17 +13,18 @@
 // limitations under the License.
 
 `include "../Header/MAC_H.vh"
-`define SIM
 
 module tb_GarbledCircuit;
 	
-	logic			clk, rst, start;	
+	logic			clk, rst, start;
+	logic	[31:0]	netlist_in;	
 	logic	[2:0]	tag_t1;
 	logic	[S-1:0]	cid, index0_t1, index1_t1; 
 	logic	[K-1:0]	data0_t1, data1_t1;	
 	
 	GarbledCircuit  #(.S(S), .K(K)) uut (  
 		.clk(clk), .rst(rst), .start(start),
+		.netlist_in(netlist_in),
 		.tag_t1(tag_t1),
 		.cid(cid), .index0_t1(index0_t1), .index1_t1(index1_t1), 
         .data0_t1(data0_t1), .data1_t1(data1_t1)
@@ -39,35 +40,66 @@ module tb_GarbledCircuit;
 	integer f_N, f_IL, f_K, f_GT, f_M;
 	integer k, l, line, cycles;
 	integer init_size, input_size, dff_size, output_size, gate_size, num_XOR;
+	integer	dff_gate_size;
+	
+	assign dff_gate_size = dff_size + gate_size;	
+	//assign netlist_in = line;
 		
 	initial begin	
 		$display("Starting simulation");
 		
-		f_N = $fopen({LOC, NETLISTFILE},"r");
+		k = 0;
+		l = 0;
+		line = 0;
+		cycles = 0;
+		init_size = 0;
+		input_size = 0;
+		dff_size = 0;
+		output_size = 0;
+		gate_size = 0;
+		num_XOR = 0;	
 		
-		$fscanf(f_N, "%h", line);
-		init_size = line[2*S-1:S]+line[S-1:0];
-		$fscanf(f_N, "%h", line);
-		input_size = line[2*S-1:S]+line[S-1:0];
-		$fscanf(f_N, "%h", line);
-		output_size = line[S-1:0];
-		dff_size = line[2*S-1:S];
-		$fscanf(f_N, "%h", line);
-		gate_size = line[S-1:0];
-		num_XOR = line[2*S-1:S];
-		
-		$fclose(f_N);
-		
-		cycles = 0;		
 		clk = 'b0;
 		rst = 'b1;	
 		start = 'b0;	
 		#100;
 		rst = 'b0;
-		#100;
+		
+		f_N = $fopen({LOC, NETLISTFILE},"r");
+		
+		@(posedge clk);
 		start = 'b1;
-		#100;		
+		
+		$fscanf(f_N, "%h", line);
+		@(posedge clk);		
 		start = 'b0;
+		netlist_in = line;
+		init_size = line[2*S-1:S]+line[S-1:0];		
+		
+		$fscanf(f_N, "%h", line);
+		@(posedge clk);	
+		netlist_in = line;
+		input_size = line[2*S-1:S]+line[S-1:0];
+		
+		$fscanf(f_N, "%h", line);
+		@(posedge clk);	
+		netlist_in = line;
+		output_size = line[S-1:0];
+		dff_size = line[2*S-1:S];
+		
+		$fscanf(f_N, "%h", line);
+		@(posedge clk);
+		netlist_in = line;	
+		gate_size = line[S-1:0];
+		num_XOR = line[2*S-1:S];
+		
+		for (k = 0; k < dff_gate_size; k = k+1) begin
+			$fscanf(f_N, "%h", line);
+			@(posedge clk);	
+			netlist_in = line;
+		end			
+		
+		$fclose(f_N);
 		
 		while(1) begin
 			cycles = cycles + 1;
