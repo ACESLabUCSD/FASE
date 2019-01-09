@@ -206,7 +206,21 @@ set_property -name "top" -value "GarbledCircuit" -objects $obj
 set obj [get_filesets sources_1]
 # Import local files from the original project
 set files [list \
- "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_0/blk_mem_gen_0.xci"]"\
+ "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_2/blk_mem_gen_2.xci"]"\
+]
+set imported_files [import_files -fileset sources_1 $files]
+
+# Set 'sources_1' fileset file properties for remote files
+# None
+
+# Set 'sources_1' fileset file properties for local files
+# None
+
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+# Import local files from the original project
+set files [list \
+ "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_0_1/blk_mem_gen_0.xci"]"\
 ]
 set imported_files [import_files -fileset sources_1 $files]
 
@@ -221,20 +235,6 @@ set obj [get_filesets sources_1]
 # Import local files from the original project
 set files [list \
  "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_1/blk_mem_gen_1.xci"]"\
-]
-set imported_files [import_files -fileset sources_1 $files]
-
-# Set 'sources_1' fileset file properties for remote files
-# None
-
-# Set 'sources_1' fileset file properties for local files
-# None
-
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-# Import local files from the original project
-set files [list \
- "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_2/blk_mem_gen_2.xci"]"\
 ]
 set imported_files [import_files -fileset sources_1 $files]
 
