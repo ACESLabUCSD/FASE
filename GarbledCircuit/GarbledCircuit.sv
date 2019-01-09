@@ -52,7 +52,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 	logic			[S-1:0]	cur_index, cur_index_t1;
 	logic			[S-1:0]	NL_rd_addr;
 	logic			[3:0]	g_logic, g_logic_t1;
-	logic					done_Netlist;
+	logic					NL_ready;
 	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR;
 	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
 	logic					DFF_present;
@@ -65,7 +65,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 		.start(start), .prep_next_cycle(NL_prep_next_cycle),
 		.netlist_in(netlist_in),
 		.rd_addr(NL_rd_addr),
-		.done(done_Netlist),
+		.ready(NL_ready),
 		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), 
 		.output_size(output_size), .gate_size(gate_size), .num_XOR(num_XOR),
 		.in0F(in0F), .in1F(in1F),
@@ -421,7 +421,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 				if(start == 'b1) nextState = WAIT;
 			end	
 			WAIT: begin
-				if(done_Netlist) begin 
+				if(NL_ready) begin 
 					if(init_done) nextState = DFF; 
 					else nextState = GETKEYS;
 				end

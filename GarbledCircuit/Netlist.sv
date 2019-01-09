@@ -5,7 +5,7 @@ module Netlist #(parameter S = 14)(
 	input							start, prep_next_cycle,
 	input					[31:0]	netlist_in,
 	input					[S-1:0]	rd_addr,
-	output	logic					done,
+	output	logic					ready,
 	output	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR,
 	output	logic					in0F, in1F, //1 if they are inputs of the circuit
 	output	logic	signed	[S-1:0]	in0, in1,
@@ -90,7 +90,7 @@ module Netlist #(parameter S = 14)(
 		else currState <= nextState;
 		
 	always_comb begin	
-		done = 'b0;
+		ready = 'b0;
 		wr_en = 'b0;
 		CP_wr_en = 'b0;
 		future = 'b0;
@@ -110,15 +110,17 @@ module Netlist #(parameter S = 14)(
 				if(wr_addr == dff_size + gate_size + N_CKT_PARAM - 'd1) nextState = PREP; 
 			end									
 			PREP: begin
-				done = 'b1;
+				ready = 'b1;
 				nextState = GARBLE;
 			end	
 			GARBLE: begin
 				future = 'b1;
+		
 				is_output = rd_data[0];
 				g_logic = rd_data[4:1];
 				in1 = rd_data[S+4:5];
 				in0 = {1'b0, rd_data[31:S+5]};
+				
 				if(prep_next_cycle) nextState = PREP; 
 			end	
 			
