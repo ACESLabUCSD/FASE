@@ -109,6 +109,7 @@ set files [list \
  "[file normalize "$origin_dir/../../GarbledCircuit/Netlist.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/DPRAM.sv"]"\
  "[file normalize "$origin_dir/../../GarbledCircuit/SBFRAM.sv"]"\
+ "[file normalize "$origin_dir/../../GarbledCircuit/Zeros.txt"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -204,11 +205,10 @@ set_property -name "top" -value "GarbledCircuit" -objects $obj
 
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
-# Import local files from the original project
 set files [list \
- "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_2/blk_mem_gen_2.xci"]"\
+ "[file normalize "$origin_dir/../../XilinxIPs/blk_mem_gen_0/blk_mem_gen_0.xci"]"\
 ]
-set imported_files [import_files -fileset sources_1 $files]
+add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
 # None
@@ -218,11 +218,10 @@ set imported_files [import_files -fileset sources_1 $files]
 
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
-# Import local files from the original project
 set files [list \
- "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_0_1/blk_mem_gen_0.xci"]"\
+ "[file normalize "$origin_dir/../../XilinxIPs/blk_mem_gen_1/blk_mem_gen_1.xci"]"\
 ]
-set imported_files [import_files -fileset sources_1 $files]
+add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
 # None
@@ -232,11 +231,10 @@ set imported_files [import_files -fileset sources_1 $files]
 
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
-# Import local files from the original project
 set files [list \
- "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_1/blk_mem_gen_1.xci"]"\
+ "[file normalize "$origin_dir/../../XilinxIPs/blk_mem_gen_2/blk_mem_gen_2.xci"]"\
 ]
-set imported_files [import_files -fileset sources_1 $files]
+add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
 # None
@@ -273,27 +271,14 @@ set obj [get_filesets sim_1]
 set files [list \
  "[file normalize "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"]"\
  "[file normalize "$origin_dir/../../testbenches/Rand.txt"]"\
- "[file normalize "$origin_dir/../../GarbledCircuit/Zeros.txt"]"\
- "[file normalize "$origin_dir/../../Header/TEMP_H.vh"]"\
 ]
 add_files -norecurse -fileset $obj $files
-
-# Import local files from the original project
-set files [list \
- "[file normalize "$origin_dir/tb_GarbledCircuit_behav.wcfg"]"\
-]
-set imported_files [import_files -fileset sim_1 $files]
 
 # Set 'sim_1' fileset file properties for remote files
 set file "$origin_dir/../../testbenches/tb_GarbledCircuit.sv"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
 set_property -name "file_type" -value "SystemVerilog" -objects $file_obj
-
-set file "$origin_dir/../../Header/TEMP_H.vh"
-set file [file normalize $file]
-set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
-set_property -name "file_type" -value "Verilog Header" -objects $file_obj
 
 
 # Set 'sim_1' fileset file properties for local files
@@ -302,7 +287,6 @@ set_property -name "file_type" -value "Verilog Header" -objects $file_obj
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
 set_property -name "top" -value "tb_GarbledCircuit" -objects $obj
-set_property -name "xsim.simulate.runtime" -value "4000ns" -objects $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {
