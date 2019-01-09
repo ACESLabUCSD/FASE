@@ -18,23 +18,20 @@ module Netlist #(parameter S = 14)(
 	logic	[S-1:0]	addr, wr_addr;
 	logic	[31:0]	line;
 	
-	logic	[31:0]	Netlist [0:2**S-1]; 		
-	initial begin
-		$readmemh("Zeros.txt", Netlist);
-	end
+	assign addr = wr_en? wr_addr : rd_addr+'d4;
 	
 	always_ff @(posedge clk or posedge rst) begin		
 		if(rst) wr_addr <= 0;
 		else if(wr_en) wr_addr <= wr_addr + 'd1;
 	end
 	
-	assign addr = wr_en? wr_addr : rd_addr+'d4;
-	assign line = Netlist[addr];
-
-	always_ff @(posedge clk or posedge rst) begin
-		if(rst) Netlist[addr] <= 'b0;
-		else if(wr_en) Netlist[addr] <= netlist_in;
-	end
+	blk_mem_gen_2 blk_mem (
+		.clka(clk),    // input wire clka
+		.wea(wr_en),      // input wire [0 : 0] wea
+		.addra(addr),  // input wire [13 : 0] addra
+		.dina(netlist_in),    // input wire [31 : 0] dina
+		.douta(line)  // output wire [31 : 0] douta
+);
 	
 	/*register file to store the circuit parameters*/
 	
@@ -46,8 +43,8 @@ module Netlist #(parameter S = 14)(
 	end	
 	
 	always_ff @(posedge clk or posedge rst) begin
-		if(rst) CircuitParams[addr] <= 'b0;
-		else if(CP_wr_en) CircuitParams[addr] <= netlist_in;
+		if(rst) CircuitParams[addr+1] <= 'b0;
+		else if(CP_wr_en) CircuitParams[addr+1] <= netlist_in;
 	end
 	
 	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
@@ -87,18 +84,15 @@ module Netlist #(parameter S = 14)(
 		in1 = -'d1;
 		in0 = -'d1;
 		nextState = currState;
+		
 		case(currState)
 			IDLE: begin 
-				if(start == 'b1) begin
-					wr_en = 'b1;
-					CP_wr_en = 'b1;
-					nextState = STORE;
-				end
+				if(start == 'b1) nextState = STORE;
 			end					
 			STORE: begin
 				wr_en = 'b1;
 				CP_wr_en = (wr_addr < 'd4);
-				if(wr_addr == dff_size + gate_size + 'd4) begin
+				if(wr_addr == dff_size + gate_size + 'd3) begin
 					done = 'b1;
 					nextState = GARBLE;
 				end

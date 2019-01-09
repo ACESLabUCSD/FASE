@@ -230,6 +230,20 @@ set imported_files [import_files -fileset sources_1 $files]
 # Set 'sources_1' fileset file properties for local files
 # None
 
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+# Import local files from the original project
+set files [list \
+ "[file normalize "$origin_dir/GarbledCircuit.srcs/sources_1/ip/blk_mem_gen_2/blk_mem_gen_2.xci"]"\
+]
+set imported_files [import_files -fileset sources_1 $files]
+
+# Set 'sources_1' fileset file properties for remote files
+# None
+
+# Set 'sources_1' fileset file properties for local files
+# None
+
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
   create_fileset -constrset constrs_1

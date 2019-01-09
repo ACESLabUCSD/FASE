@@ -57,7 +57,8 @@ module tb_GarbledCircuit;
 		dff_size = 0;
 		output_size = 0;
 		gate_size = 0;
-		num_XOR = 0;	
+		num_XOR = 0;
+		netlist_in = 'b0;	
 		
 		clk = 'b0;
 		rst = 'b1;	

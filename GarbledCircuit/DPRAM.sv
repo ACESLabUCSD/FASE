@@ -10,12 +10,6 @@ module DPRAM #(parameter S = 20, K = 128)(
 	output	logic			rd_data_ready_0, rd_data_ready_1, 
 	output	logic	[K-1:0]	rd_data_0, rd_data_1
 );
-
-	/*localparam ZEROFILE = "Zeros.txt";
-	logic	[K-1:0]	DPRAM [0:2**S-1];
-	initial begin
-		$readmemh(ZEROFILE, DPRAM);
-	end*/
 	
 	logic	[S-1:0]	addr_0, addr_1;
 	
@@ -56,21 +50,6 @@ module DPRAM #(parameter S = 20, K = 128)(
 			);
 		end
 	endgenerate
-
-	/*always_ff @(posedge clk or posedge rst) begin
-		if(rst) begin
-			if (wr_en_0) DPRAM[addr_0] <= 'b0; 
-			else rd_data_0 <= 'b0;
-			if (wr_en_1) DPRAM[addr_1] <= 'b0; 
-			else rd_data_1 <= 'b0;
-		end
-		else begin
-			if (wr_en_0) DPRAM[addr_0] <= wr_data_0; 
-			else rd_data_0 <= DPRAM[addr_0];
-			if (wr_en_1) DPRAM[addr_1] <= wr_data_1;
-			else rd_data_1 <= DPRAM[addr_1]; 
-		end
-	end*/
 	
 	/*flag*/
 	
