@@ -1,7 +1,8 @@
 `include "../Header/MAC_H.vh"
 
 module Netlist #(parameter S = 14)(
-	input							clk, rst, start,
+	input							clk, rst,
+	input							start, prep_next_cycle,
 	input					[31:0]	netlist_in,
 	input					[S-1:0]	rd_addr,
 	output	logic					done,
@@ -12,16 +13,28 @@ module Netlist #(parameter S = 14)(
 	output	logic					is_output //1 if gate output is output of the circuit
 );
 
+	localparam N_CKT_PARAM = 4;
+
 	/*memory to store the circuit*/
 	
 	logic			wr_en;
 	logic	[S-1:0]	addr, wr_addr;
-	logic	[31:0]	line;
+	logic	[31:0]	rd_data, rd_data_future;
+	logic			old_bit, future;
 	
-	assign addr = wr_en? wr_addr : rd_addr+'d4;
+	assign addr = wr_en? wr_addr : rd_addr + N_CKT_PARAM + future;
 	
 	always_ff @(posedge clk or posedge rst) begin		
-		if(rst) wr_addr <= 0;
+		if(rst) old_bit <= 'b0;
+		else old_bit <= addr[0];
+	end	
+	
+	always_comb begin		
+		if((old_bit ^ addr[0])) rd_data = rd_data_future;
+	end	
+	
+	always_ff @(posedge clk or posedge rst) begin		
+		if(rst) wr_addr <= 'd0;
 		else if(wr_en) wr_addr <= wr_addr + 'd1;
 	end
 	
@@ -30,14 +43,14 @@ module Netlist #(parameter S = 14)(
 		.wea(wr_en),      // input wire [0 : 0] wea
 		.addra(addr),  // input wire [13 : 0] addra
 		.dina(netlist_in),    // input wire [31 : 0] dina
-		.douta(line)  // output wire [31 : 0] douta
-);
+		.douta(rd_data_future)  // output wire [31 : 0] douta
+	);
 	
 	/*register file to store the circuit parameters*/
 	
 	logic			CP_wr_en; 
 	
-	logic	[31:0]	CircuitParams [0:3]; 		
+	logic	[31:0]	CircuitParams [0:N_CKT_PARAM-1]; 		
 	initial begin
 		$readmemh("Zeros.txt", CircuitParams);
 	end	
@@ -50,8 +63,8 @@ module Netlist #(parameter S = 14)(
 	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
 	
 	always_comb begin
-		init_size = CircuitParams[0][2*S-1:S]+CircuitParams[0][S-1:0]; 
-		input_size = CircuitParams[1][2*S-1:S]+CircuitParams[1][S-1:0]; 
+		init_size = CircuitParams[0][2*S-1:S] + CircuitParams[0][S-1:0]; 
+		input_size = CircuitParams[1][2*S-1:S] + CircuitParams[1][S-1:0]; 
 		output_size = CircuitParams[2][S-1:0]; 
 		dff_size = CircuitParams[2][2*S-1:S]; 
 		gate_size = CircuitParams[3][S-1:0]; 
@@ -66,6 +79,7 @@ module Netlist #(parameter S = 14)(
 	typedef enum{
 		IDLE,
 		STORE,
+		PREP,
 		GARBLE
 	}state;
 	
@@ -79,6 +93,7 @@ module Netlist #(parameter S = 14)(
 		done = 'b0;
 		wr_en = 'b0;
 		CP_wr_en = 'b0;
+		future = 'b0;
 		is_output = 'b0;
 		g_logic = 'b0;
 		in1 = -'d1;
@@ -91,17 +106,20 @@ module Netlist #(parameter S = 14)(
 			end					
 			STORE: begin
 				wr_en = 'b1;
-				CP_wr_en = (wr_addr < 'd4);
-				if(wr_addr == dff_size + gate_size + 'd3) begin
-					done = 'b1;
-					nextState = GARBLE;
-				end
-			end				
+				CP_wr_en = (wr_addr < N_CKT_PARAM);
+				if(wr_addr == dff_size + gate_size + N_CKT_PARAM - 'd1) nextState = PREP; 
+			end									
+			PREP: begin
+				done = 'b1;
+				nextState = GARBLE;
+			end	
 			GARBLE: begin
-				is_output = line[0];
-				g_logic = line[4:1];
-				in1 = line[S+4:5];
-				in0 = {1'b0, line[31:S+5]};
+				future = 'b1;
+				is_output = rd_data[0];
+				g_logic = rd_data[4:1];
+				in1 = rd_data[S+4:5];
+				in0 = {1'b0, rd_data[31:S+5]};
+				if(prep_next_cycle) nextState = PREP; 
 			end	
 			
 		endcase

@@ -46,6 +46,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 	
 	/*load the netlist*/
 	
+	logic					NL_prep_next_cycle;
 	logic					cid_rst, cur_index_rst;
 	logic					cid_inc, cur_index_inc, cur_index_inc_t1, cur_index_overflow;
 	logic			[S-1:0]	cur_index, cur_index_t1;
@@ -60,7 +61,8 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 	logic					is_output, is_output_t1;
 	
 	Netlist #(.S(S)) Netlist(
-		.clk(clk), .rst(rst), .start(start),
+		.clk(clk), .rst(rst), 
+		.start(start), .prep_next_cycle(NL_prep_next_cycle),
 		.netlist_in(netlist_in),
 		.rd_addr(NL_rd_addr),
 		.done(done_Netlist),
@@ -73,10 +75,11 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 	);
 	
 	always_comb begin
+		NL_prep_next_cycle = cur_index_rst;
+		NL_rd_addr = cur_index;
 		DFF_present = (dff_size > 'd0);
 		init_input_size = init_size + input_size;
 		dff_gate_size = dff_size + gate_size;
-		NL_rd_addr = cur_index;
 	end
 	
 	always @(posedge clk or posedge rst) begin
@@ -376,6 +379,8 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 	
 	/*FSM*/
 	
+	logic	init_done;
+	
 	typedef enum{
 		IDLE,
 		GETKEYS,
@@ -409,13 +414,17 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 		case(currState)
 			IDLE: begin
 				cid_rst = 'b1;
-				cur_index_rst = 'b1;		
+				cur_index_rst = 'b1;
+				init_done = 'b0;
 				R = 'b0; 
 				AES_key = 'b0; 
 				if(start == 'b1) nextState = WAIT;
 			end	
 			WAIT: begin
-				if(done_Netlist) nextState = GETKEYS;
+				if(done_Netlist) begin 
+					if(init_done) nextState = DFF; 
+					else nextState = GETKEYS;
+				end
 			end	
 			GETKEYS: begin
 				en_LabelGen = 'b11;
@@ -424,6 +433,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 				nextState = CONSTLABELS;
 			end				
 			CONSTLABELS: begin
+				init_done = 'b1;
 				en_LabelGen = 'b11;
 				
 				IL_wr_en_0 = 'b1;
@@ -497,7 +507,7 @@ module GarbledCircuit #(parameter S = 14, K = 128)(
 			RSTCOUNTERS:  begin
 				cid_inc = 'b1;
 				cur_index_rst = 'b1;				
-				nextState = DFF;
+				nextState = WAIT;
 			end
 		endcase
 	end
