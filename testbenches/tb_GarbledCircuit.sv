@@ -75,24 +75,24 @@ module tb_GarbledCircuit;
 		@(posedge clk);		
 		start = 'b0;
 		netlist_in = line;
-		init_size = line[2*S-1:S]+line[S-1:0];		
+		init_size = line[2*P-1:P]+line[P-1:0];		
 		
 		$fscanf(f_N, "%h", line);
 		@(posedge clk);	
 		netlist_in = line;
-		input_size = line[2*S-1:S]+line[S-1:0];
+		input_size = line[2*P-1:P]+line[P-1:0];
 		
 		$fscanf(f_N, "%h", line);
 		@(posedge clk);	
 		netlist_in = line;
-		output_size = line[S-1:0];
-		dff_size = line[2*S-1:S];
+		output_size = line[P-1:0];
+		dff_size = line[2*P-1:P];
 		
 		$fscanf(f_N, "%h", line);
 		@(posedge clk);
 		netlist_in = line;	
-		gate_size = line[S-1:0];
-		num_XOR = line[2*S-1:S];
+		gate_size = line[P-1:0];
+		num_XOR = line[2*P-1:P];
 		
 		for (k = 0; k < dff_gate_size; k = k+1) begin
 			$fscanf(f_N, "%h", line);

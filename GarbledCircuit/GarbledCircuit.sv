@@ -14,7 +14,7 @@
 
 `include "../Header/MAC_H.vh"
 
-module GarbledCircuit #(parameter S = 14, K = 128)(	
+module GarbledCircuit #(parameter S = 13, K = 128)(	
 	input					clk, rst, start,
 	input			[31:0]	netlist_in,
 	output	logic	[2:0]	tag_t1,

@@ -72,7 +72,8 @@ endfunction
 
 parameter NR_AES = 10; //no of pipeline stages in AES = no of AES rounds
 parameter K = 128; //security parameter, bit-length of keys
-parameter S = 14; //width of gate id (or wire id), maximum number of gates = 2^S
+parameter S = 13; //width of gate id (or wire id), maximum number of gates = 2^S
+parameter P = 14; //used to parse HSCD files, has to match with MACRO S defined in hostCPU_TG/scd/scd.h
 
 /*simulation files*/	
 parameter NETLISTFILE = "Netlist.hscd";

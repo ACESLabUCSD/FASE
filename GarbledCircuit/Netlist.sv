@@ -22,14 +22,13 @@ module Netlist #(parameter S = 14)(
 	logic	[31:0]	rd_data, rd_data_future;
 	logic			old_bit, future;
 	
-	assign addr = wr_en? wr_addr : rd_addr + N_CKT_PARAM + future;
-	
 	always_ff @(posedge clk or posedge rst) begin		
 		if(rst) old_bit <= 'b0;
 		else old_bit <= addr[0];
 	end	
 	
-	always_comb begin		
+	always_comb begin
+		addr = wr_en? wr_addr : rd_addr + N_CKT_PARAM + future;
 		if((old_bit ^ addr[0])) rd_data = rd_data_future;
 	end	
 	
@@ -49,6 +48,7 @@ module Netlist #(parameter S = 14)(
 	/*register file to store the circuit parameters*/
 	
 	logic			CP_wr_en; 
+	logic	[31:0]	netlist_in_t1;
 	
 	logic	[31:0]	CircuitParams [0:N_CKT_PARAM-1]; 		
 	initial begin
@@ -56,19 +56,24 @@ module Netlist #(parameter S = 14)(
 	end	
 	
 	always_ff @(posedge clk or posedge rst) begin
-		if(rst) CircuitParams[addr+1] <= 'b0;
-		else if(CP_wr_en) CircuitParams[addr+1] <= netlist_in;
+		if(rst) begin 
+			CircuitParams[addr] <= 'b0;
+		end
+		else begin
+			netlist_in_t1 <= netlist_in;
+			if(CP_wr_en) CircuitParams[addr] <= netlist_in_t1;
+		end
 	end
 	
 	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
 	
 	always_comb begin
-		init_size = CircuitParams[0][2*S-1:S] + CircuitParams[0][S-1:0]; 
-		input_size = CircuitParams[1][2*S-1:S] + CircuitParams[1][S-1:0]; 
-		output_size = CircuitParams[2][S-1:0]; 
-		dff_size = CircuitParams[2][2*S-1:S]; 
-		gate_size = CircuitParams[3][S-1:0]; 
-		num_XOR = CircuitParams[3][2*S-1:S];
+		init_size = CircuitParams[0][2*P-1:P] + CircuitParams[0][P-1:0]; 
+		input_size = CircuitParams[1][2*P-1:P] + CircuitParams[1][P-1:0]; 
+		output_size = CircuitParams[2][P-1:0]; 
+		dff_size = CircuitParams[2][2*P-1:P]; 
+		gate_size = CircuitParams[3][P-1:0]; 
+		num_XOR = CircuitParams[3][2*P-1:P];
 		
 		init_input_size = init_size + input_size;
 		dff_gate_size = dff_size + gate_size;
@@ -118,8 +123,8 @@ module Netlist #(parameter S = 14)(
 		
 				is_output = rd_data[0];
 				g_logic = rd_data[4:1];
-				in1 = rd_data[S+4:5];
-				in0 = {1'b0, rd_data[31:S+5]};
+				in1 = rd_data[P+4:5];
+				in0 = {1'b0, rd_data[31:P+5]};
 				
 				if(prep_next_cycle) nextState = PREP; 
 			end	
