@@ -173,63 +173,65 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	
 	/*memories for input labels, output labels, and garbled tables*/
 	
-	logic				IL_clr;
-	logic				IL_wr_en_0, IL_wr_en_1;
-	logic	[S-1:0]		IL_wr_addr_0, IL_wr_addr_1;
-	logic	[S-1:0]		IL_rd_addr_0, IL_rd_addr_1;  
-	logic	[K-1:0]		IL_wr_data_0, IL_wr_data_1; 
-	logic				IL_busy_0, IL_busy_1; 
-	logic				IL_rd_data_ready_0, IL_rd_data_ready_1; 
-	logic	[K-1:0]		IL_rd_data_0_t1, IL_rd_data_1_t1;
+	logic			IL_clr;
+	logic			IL_wr_en_0, IL_wr_en_1;
+	logic	[S-1:0]	IL_wr_addr_0, IL_wr_addr_1;
+	logic			IL_rd_req_0, IL_rd_req_1;
+	logic	[S-1:0]	IL_rd_addr_0, IL_rd_addr_1;  
+	logic	[K-1:0]	IL_wr_data_0, IL_wr_data_1; 
+	logic			IL_rd_data_ready_0, IL_rd_data_ready_1; 
+	logic	[K-1:0]	IL_rd_data_0_t1, IL_rd_data_1_t1;
 	
 	DPRAM #(.S(S), .K(K)) InLabels(
 		.clk(clk), .rst(rst), .clr(IL_clr),
 		.wr_en_0(IL_wr_en_0), .wr_en_1(IL_wr_en_1),
 		.wr_addr_0(IL_wr_addr_0), .wr_addr_1(IL_wr_addr_1),
+		.rd_req_0(IL_rd_req_0), .rd_req_1(IL_rd_req_1),
 		.rd_addr_0(IL_rd_addr_0), .rd_addr_1(IL_rd_addr_1),  
 		.wr_data_0(IL_wr_data_0), .wr_data_1(IL_wr_data_1), 
-		.busy_0(IL_busy_0), .busy_1(IL_busy_1),
 		.rd_data_ready_0(IL_rd_data_ready_0), .rd_data_ready_1(IL_rd_data_ready_1),
 		.rd_data_0(IL_rd_data_0_t1), .rd_data_1(IL_rd_data_1_t1)
 	);
 	
-	logic				OL_clr;
-	logic				OL_wr_en_0_t1, OL_wr_en_1_t1;
-	logic	[S-1:0]		OL_wr_addr_0_t1, OL_wr_addr_1_t1;
-	logic	[S-1:0]		OL_rd_addr_0, OL_rd_addr_1;  
-	logic	[K-1:0]		OL_wr_data_0_t1, OL_wr_data_1_t1; 
-	logic				OL_busy_0, OL_busy_1; 
-	logic				OL_rd_data_ready_0, OL_rd_data_ready_1;
-	logic	[K-1:0]		OL_rd_data_0_t1, OL_rd_data_1_t1;
+	logic			OL_clr;
+	logic			OL_wr_en_0_t1, OL_wr_en_1_t1;
+	logic	[S-1:0]	OL_wr_addr_0_t1, OL_wr_addr_1_t1;
+	logic			OL_rd_req_0, OL_rd_req_1;
+	logic	[S-1:0]	OL_rd_addr_0, OL_rd_addr_1;  
+	logic	[K-1:0]	OL_wr_data_0_t1, OL_wr_data_1_t1; 
+	logic			OL_rd_data_ready_0, OL_rd_data_ready_1;
+	logic			OL_stall_rd;
+	logic	[K-1:0]	OL_rd_data_0_t1, OL_rd_data_1_t1;
 	
 	DPRAM #(.S(S), .K(K)) OutLabels(
 		.clk(clk), .rst(rst), .clr(OL_clr),
 		.wr_en_0(OL_wr_en_0_t1), .wr_en_1(OL_wr_en_1_t1),
 		.wr_addr_0(OL_wr_addr_0_t1), .wr_addr_1(OL_wr_addr_1_t1),
+		.rd_req_0(OL_rd_req_0), .rd_req_1(OL_rd_req_1),
 		.rd_addr_0(OL_rd_addr_0), .rd_addr_1(OL_rd_addr_1),  
 		.wr_data_0(OL_wr_data_0_t1), .wr_data_1(OL_wr_data_1_t1), 
-		.busy_0(OL_busy_0), .busy_1(OL_busy_1), 
 		.rd_data_ready_0(OL_rd_data_ready_0), .rd_data_ready_1(OL_rd_data_ready_1),
+		.stall_rd(OL_stall_rd),
 		.rd_data_0(OL_rd_data_0_t1), .rd_data_1(OL_rd_data_1_t1)
 	);
 	
 	/*The memory for Garbled Tables has half the elements each with twice the bit-width, since tables are generated in pairs*/
-	logic					GT_clr;
-	logic					GT_wr_en_0_t1, GT_wr_en_1_t1;
-	logic	[S-2:0]			GT_wr_addr_0_t1, GT_wr_addr_1_t1;
-	logic	[S-2:0]			GT_rd_addr_0, GT_rd_addr_1;  
-	logic	[2*K-1:0]		GT_wr_data_0_t1, GT_wr_data_1_t1;
-	logic					GT_busy_0, GT_busy_1; 
-	logic					GT_rd_data_ready_0, GT_rd_data_ready_1; 
-	logic	[2*K-1:0]		GT_rd_data_0_t1, GT_rd_data_1_t1;
+	logic				GT_clr;
+	logic				GT_wr_en_0_t1, GT_wr_en_1_t1;
+	logic	[S-2:0]		GT_wr_addr_0_t1, GT_wr_addr_1_t1;
+	logic				GT_rd_req_0, GT_rd_req_1;
+	logic	[S-2:0]		GT_rd_addr_0, GT_rd_addr_1;  
+	logic	[2*K-1:0]	GT_wr_data_0_t1, GT_wr_data_1_t1;
+	logic				GT_rd_data_ready_0, GT_rd_data_ready_1; 
+	logic	[2*K-1:0]	GT_rd_data_0_t1, GT_rd_data_1_t1;
 	
 	DPRAM #(.S(S-1), .K(2*K)) GarbledTables(
 		.clk(clk), .rst(rst), .clr(GT_clr),
 		.wr_en_0(GT_wr_en_0_t1), .wr_en_1(GT_wr_en_1_t1),
 		.wr_addr_0(GT_wr_addr_0_t1), .wr_addr_1(GT_wr_addr_1_t1),
+		.rd_req_0(GT_rd_req_0), .rd_req_1(GT_rd_req_1),
 		.rd_addr_0(GT_rd_addr_0), .rd_addr_1(GT_rd_addr_1),  
 		.wr_data_0(GT_wr_data_0_t1), .wr_data_1(GT_wr_data_1_t1), 
-		.busy_0(GT_busy_0), .busy_1(GT_busy_1), 
 		.rd_data_ready_0(GT_rd_data_ready_0), .rd_data_ready_1(GT_rd_data_ready_1),
 		.rd_data_0(GT_rd_data_0_t1), .rd_data_1(GT_rd_data_1_t1)
 	);	
@@ -239,6 +241,8 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		GT_wr_addr_beg_t1 = cur_index_t1 - dff_size - cur_num_XOR_t1;
 	
 		IL_clr = cur_index_rst;
+		IL_rd_req_0 = 'b0;
+		IL_rd_req_1 = 'b0;
 		IL_rd_addr_0 = in0+'d2; //first two locations are saved for constant labels
 		IL_rd_addr_1 = in1+'d2;
 		IL_wr_data_0 = key[K-1:0];
@@ -249,6 +253,8 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		OL_wr_en_1_t1 = (cur_index_inc_t1&is_XORS_t1)|is_FF_t1;
 		OL_wr_addr_0_t1 = OL_wr_addr_end_t1; 
 		OL_wr_addr_1_t1 = cur_index_t1; 
+		OL_rd_req_0 = (~in0F)&OL_rd_data_ready_0&(in1F|OL_rd_data_ready_1);
+		OL_rd_req_1 = (~in1F)&OL_rd_data_ready_1&(in0F|OL_rd_data_ready_0);
 		OL_rd_addr_0 = in0-init_input_size;
 		OL_rd_addr_1 = in1-init_input_size;  
 		OL_wr_data_0_t1 = out_label_t1;
@@ -259,6 +265,8 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		GT_wr_en_1_t1 = 'b0;
 		GT_wr_addr_0_t1 = GT_wr_addr_end_t1;
 		GT_wr_addr_1_t1 = 'bz;
+		GT_rd_req_0 = 'b0;
+		GT_rd_req_1 = 'b0;
 		GT_rd_addr_0 = 'bz;
 		GT_rd_addr_1 = GT_ext_rd_addr;  
 		GT_wr_data_0_t1 = {gt_row_0_t1, gt_row_1_t1};
@@ -474,8 +482,12 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 					nextState = GARBLE;
 				end
 			end		
-			GARBLE: begin				
-				cur_index_inc = (in0F|(OL_rd_data_ready_0&~OL_busy_0)) & (in1F|(OL_rd_data_ready_1&~OL_busy_1));
+			GARBLE: begin	
+`ifdef MEM_OPT
+				cur_index_inc = (in0F|OL_rd_data_ready_0) & (in1F|OL_rd_data_ready_1) & ~OL_stall_rd;
+`else			
+				cur_index_inc = (in0F|(OL_rd_data_ready_0&~OL_wr_en_0_t1)) & (in1F|(OL_rd_data_ready_1&~OL_wr_en_1_t1));
+`endif
 			
 				IL_wr_en_0 = in0F & ~IL_rd_data_ready_0;
 				IL_wr_en_1 = in1F & ~IL_rd_data_ready_1 & ~((g_logic == NOTGATE)); //is_NOT_t1 is not matched in time
