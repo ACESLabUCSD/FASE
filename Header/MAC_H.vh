@@ -5,7 +5,7 @@
 
 `include "../Header/TEMP_H.vh"
 
-//`define MEM_OPT
+`define MEM_OPT
 
 function automatic integer log2;
 	input [31:0] value;

@@ -1,6 +1,6 @@
 `include "../Header/MAC_H.vh"
 
-module DPRAM #(parameter S = 20, K = 128)(
+module DPRAM #(parameter S = 13, K = 128)(
 	input					clk, rst, clr,
 	input					wr_en_0, wr_en_1,
 	input			[S-1:0]	wr_addr_0, wr_addr_1,
@@ -118,6 +118,7 @@ module DPRAM #(parameter S = 20, K = 128)(
 
 	generate	
 		if(K == 128) begin: K_128
+			if(S == 13) begin: S_13
 			blk_mem_gen_0 blk_mem(
 				.clka(clk),    
 				.wea(wea),     
@@ -130,6 +131,38 @@ module DPRAM #(parameter S = 20, K = 128)(
 				.dinb(dinb),   
 				.doutb(doutb)  
 			);
+			end
+			else begin: S_10
+			blk_mem_gen_3 blk_mem(
+				.clka(clk),    
+				.wea(wea),     
+				.addra(addra), 
+				.dina(dina),   
+				.douta(douta), 
+				.clkb(clk),    
+				.web(web),     
+				.addrb(addrb), 
+				.dinb(dinb),   
+				.doutb(doutb)  
+			);
+			end
+	
+			/*flags*/
+			
+			logic	[0:2**S-1]	FLAG ;
+			
+			always_comb  begin
+				rd_data_ready_0 = FLAG[rd_addr_0];
+				rd_data_ready_1 = FLAG[rd_addr_1];
+			end
+
+			always_ff @(posedge clk or posedge rst) begin
+				if(rst|clr) FLAG <= {(2**S){1'b0}};
+				else begin
+					if (wea) FLAG[addra] <= 'b1; 
+					if (web) FLAG[addrb] <= 'b1; 
+				end
+			end
 		end
 		else begin: K_256
 			blk_mem_gen_1 blk_mem(
@@ -143,25 +176,13 @@ module DPRAM #(parameter S = 20, K = 128)(
 				.addrb(addrb), 
 				.dinb(dinb),   
 				.doutb(doutb)  
-			);
+			);		
+			
+			always_comb  begin
+				rd_data_ready_0 = 'b0;
+				rd_data_ready_1 = 'b1;
+			end
 		end
 	endgenerate
-	
-	/*flag*/
-	
-	logic	[0:2**S-1]	FLAG ;
-	
-	always_comb  begin
-		rd_data_ready_0 = FLAG[rd_addr_0];
-		rd_data_ready_1 = FLAG[rd_addr_1];
-	end
-
-	always_ff @(posedge clk or posedge rst) begin
-		if(rst|clr) FLAG <= {(2**S){1'b0}};
-		else begin
-			if (wea) FLAG[addra] <= 'b1; 
-			if (web) FLAG[addrb] <= 'b1; 
-		end
-	end
 
 endmodule

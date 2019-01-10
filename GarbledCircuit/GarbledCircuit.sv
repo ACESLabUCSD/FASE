@@ -173,16 +173,18 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	
 	/*memories for input labels, output labels, and garbled tables*/
 	
-	logic			IL_clr;
-	logic			IL_wr_en_0, IL_wr_en_1;
-	logic	[S-1:0]	IL_wr_addr_0, IL_wr_addr_1;
-	logic			IL_rd_req_0, IL_rd_req_1;
-	logic	[S-1:0]	IL_rd_addr_0, IL_rd_addr_1;  
-	logic	[K-1:0]	IL_wr_data_0, IL_wr_data_1; 
-	logic			IL_rd_data_ready_0, IL_rd_data_ready_1; 
-	logic	[K-1:0]	IL_rd_data_0_t1, IL_rd_data_1_t1;
+	localparam SI = S-3;
 	
-	DPRAM #(.S(S), .K(K)) InLabels(
+	logic				IL_clr;
+	logic				IL_wr_en_0, IL_wr_en_1;
+	logic	[SI-1:0]	IL_wr_addr_0, IL_wr_addr_1;
+	logic				IL_rd_req_0, IL_rd_req_1;
+	logic	[SI-1:0]	IL_rd_addr_0, IL_rd_addr_1;  
+	logic	[K-1:0]		IL_wr_data_0, IL_wr_data_1; 
+	logic				IL_rd_data_ready_0, IL_rd_data_ready_1; 
+	logic	[K-1:0]		IL_rd_data_0_t1, IL_rd_data_1_t1;
+	
+	DPRAM #(.S(SI), .K(K)) InLabels(
 		.clk(clk), .rst(rst), .clr(IL_clr),
 		.wr_en_0(IL_wr_en_0), .wr_en_1(IL_wr_en_1),
 		.wr_addr_0(IL_wr_addr_0), .wr_addr_1(IL_wr_addr_1),
@@ -387,7 +389,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	
 	/*FSM*/
 	
-	logic	init_done;
+	logic	init_done, first_GT;
 	
 	typedef enum{
 		IDLE,
@@ -424,6 +426,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 				cid_rst = 'b1;
 				cur_index_rst = 'b1;
 				init_done = 'b0;
+				first_GT = 'b0;
 				R = 'b0; 
 				AES_key = 'b0; 
 				if(start == 'b1) nextState = WAIT;
@@ -478,9 +481,10 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 					if ((in0 == CONSTZERO)||(in0 == CONSTONE)) DFF_mem_id = IL_0;
 					else DFF_mem_id = OL_0;
 				end
-				if(cur_index == dff_size-1) begin 
-					nextState = GARBLE;
-				end
+				
+				first_GT = 'b0;
+				
+				if(cur_index == dff_size-1) nextState = GARBLE;				
 			end		
 			GARBLE: begin	
 `ifdef MEM_OPT
@@ -508,7 +512,9 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 				end
 				else in1_mem_id = OL_1;	
 				
-				OL_GT_wr_en_beg_t1 = cur_index_inc_t1&(~(is_XORS_t1|is_FF_t1));		
+				OL_GT_wr_en_beg_t1 = cur_index_inc_t1&(~(is_XORS_t1|is_FF_t1));	
+
+				if(OL_GT_wr_en_end_t1) first_GT = 'b1;
 
 				/*processed all dffs and gates, transferred all garbled tables, and the inputs for the last gate are ready*/
 				if((cur_index >= dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)&&(cur_index_inc == 'b1)) nextState = MASKS;
@@ -606,7 +612,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 					data_mem_id = KEY_0; //KEY_0 and KEY_1 equivalent in this case							
 				end
 				else begin
-					if(GT_rd_data_ready_1) begin
+					if((GT_ext_rd_addr < GT_wr_addr_end_t1) && (first_GT == 'b1)) begin
 						tag = 3'b010;
 						GT_ext_rd_inc = 'b1;
 						index0 = 2*GT_ext_rd_addr;
