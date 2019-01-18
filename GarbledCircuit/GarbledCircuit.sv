@@ -279,7 +279,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	
 	logic	[0:2**S-1]	OutputMask_t1;
 	logic 				GC_mask_t1;
-	logic				OM_inc_beg_t1, OM_inc_end_t1, XOR_mask_beg_t1, XOR_mask_end_t1, is_XOR_end_t1;
+	logic				OM_inc_beg_t1, OM_inc_end_t1, XOR_DFF_mask_beg_t1, XOR_DFF_mask_end_t1, is_XOR_end_t1;
 	logic	[2:0]		OM_beg_t1, OM_end_t1;
 	logic	[S-1:0]		OM_index;
 	
@@ -291,16 +291,16 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	
 	always_comb begin
 		GC_mask_t1 = out_label_t1[0];
-		XOR_mask_beg_t1 = XOR_label_t1[0];
+		XOR_DFF_mask_beg_t1 = is_FF_t1? DFF_label_t1[0] : XOR_label_t1[0]/*XOR_label_t1[0]*/; //
 		OM_inc_beg_t1 = is_output_t1 & cur_index_inc_t1;
-		OM_beg_t1 = {XOR_mask_beg_t1, is_XORS_t1, OM_inc_beg_t1};
-		{XOR_mask_end_t1, is_XOR_end_t1, OM_inc_end_t1} = OM_end_t1;
+		OM_beg_t1 = {XOR_DFF_mask_beg_t1, is_XORS_t1|is_FF_t1, OM_inc_beg_t1};
+		{XOR_DFF_mask_end_t1, is_XOR_end_t1, OM_inc_end_t1} = OM_end_t1;
 	end
 	
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst|cur_index_rst) OutputMask_t1 <= {(2**S){1'b0}};		
 		else if(OM_inc_end_t1) begin
-			if(is_XOR_end_t1) OutputMask_t1[output_size-1-OM_index] <= XOR_mask_end_t1;
+			if(is_XOR_end_t1) OutputMask_t1[output_size-1-OM_index] <= XOR_DFF_mask_end_t1;
 			else OutputMask_t1[output_size-1-OM_index] <= GC_mask_t1;
 		end	
 	end
