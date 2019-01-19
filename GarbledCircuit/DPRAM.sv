@@ -22,9 +22,9 @@ module DPRAM #(parameter S = 13, K = 128)(
 	logic	[S-1:0]	wr_addr_q;
 	logic	[K-1:0]	wr_data_q;
 	
-	logic 	[4:0]	wr_state;
+	logic 	[4:0]	mem_state;
 	
-	assign wr_state = {wr_en_q, wr_en_0, wr_en_1, rd_req_0, rd_req_1};
+	assign mem_state = {wr_en_q, wr_en_0, wr_en_1, rd_req_0, rd_req_1};
 		
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst) begin 
@@ -33,7 +33,8 @@ module DPRAM #(parameter S = 13, K = 128)(
 			wr_data_q <= 'b0;
 		end
 		else begin
-			if((wr_state == 5'b00111)||(wr_state == 5'b01011)||(wr_state == 5'b11100)||(wr_state == 5'b11101)||(wr_state == 5'b11110)||(wr_state == 5'b11111)) wr_en_q <= 'b1;
+			/*if((mem_state == 5'b00111)||(mem_state == 5'b01011)||(mem_state == 5'b11100)||(mem_state == 5'b11101)||(mem_state == 5'b11110)||(mem_state == 5'b11111))*/
+			if((mem_state == 5'b00111)||(mem_state == 5'b01011)||(mem_state[4:2] == 3'b111))wr_en_q <= 'b1;
 			else wr_en_q <= 'b0;
 			if(wr_en_1) begin
 				wr_addr_q <= wr_addr_1;
@@ -57,46 +58,42 @@ module DPRAM #(parameter S = 13, K = 128)(
 		rd_data_0 = douta;
 		rd_data_1 = doutb;
 		
-		if(wr_state == 5'b00101) begin
+		if(mem_state == 5'b00101) begin
 			addra = rd_addr_1;
 			rd_data_1 = douta;
 		end
-		if(wr_state == 5'b01010) begin
+		if(mem_state == 5'b01010) begin
 			addrb = rd_addr_0;
 			rd_data_0 = doutb;
 		end
-		if((wr_state == 5'b10000)||(wr_state == 5'b10001)||(wr_state == 5'b10100)) begin
+		if((mem_state == 5'b10000)||(mem_state == 5'b10001)) begin
 			wea = 'b1;
 			addra = wr_addr_q;
 			dina = wr_data_q;
 		end
-		if((wr_state == 5'b10010)||(wr_state == 5'b11000)) begin
+		if(mem_state == 5'b10010) begin
 			web = 'b1;
 			addrb = wr_addr_q;
 			dinb = wr_data_q;
 		end
-		if(wr_state == 5'b00111) begin
+		if(mem_state == 5'b00111) begin
 			web = 'b0;
 			addrb = rd_addr_1;
 		end
-		if(wr_state == 5'b01011) begin
+		if(mem_state == 5'b01011) begin
 			wea = 'b0;
 			addra = rd_addr_0;
 		end
-		if(wr_state == 5'b11100) begin
-			addrb = wr_addr_q;
-			dinb = wr_data_q;
-		end
-		if((wr_state == 5'b01101)||(wr_state == 5'b01110)||(wr_state == 5'b011111))begin
+		if(mem_state[4:2] == 3'b011)begin
 			stall_rd = 'b1;
 		end
-		if((wr_state == 5'b10011)||(wr_state == 5'b10101)||(wr_state == 5'b10110)||(wr_state == 5'b10111))begin
+		if((mem_state == 5'b10011)||(mem_state[4:2] == 5'b101))begin
 			stall_rd = 'b1;
 			wea = 'b1;
 			addra = wr_addr_q;
 			dina = wr_data_q;
 		end
-		if((wr_state == 5'b11001)||(wr_state == 5'b11010)||(wr_state == 5'b11011)||(wr_state == 5'b11101)||(wr_state == 5'b11110)||(wr_state == 5'b11111))begin
+		if(mem_state[4:3] == 2'b11)begin
 			stall_rd = 'b1;
 			web = 'b1;
 			addrb = wr_addr_q;
