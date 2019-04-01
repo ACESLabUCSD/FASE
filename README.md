@@ -13,11 +13,11 @@ The host CPU reads the generated garbled tables and executes Yao's protocol with
 - Set up the host CPU. 
 - Set up the Vivado project for `GarbledCircuit` inside the [Vivado](/Vivado) directory.
 ```
-cd XilinxIPs/
-tar -xvzf IPs.tar.gz 
-cd ../Vivado/GarbledCircuit/
-vivado [-mode tcl]
-source GarbledCircuit.tcl
+  $ cd XilinxIPs/
+  $ tar -xvzf IPs.tar.gz 
+  $ cd ../Vivado/GarbledCircuit/
+  $ vivado [-mode tcl]
+  Vivado% source GarbledCircuit.tcl
 ```
 
 ## Steps to securely evaluate a function through FASE (through Vivado Simulation)
@@ -30,11 +30,11 @@ are located at the same level; update the relative location if needed).
 This will generate the garbled tables for the given function
 inside the directory of the HSCD file set at the previous step.  
 ```
-cd Vivado/GarbledCircuit/
-vivado [-mode tcl]
-open_project GarbledCircuit.xpr
-launch_simulation
-run all
+  $ cd Vivado/GarbledCircuit/
+  $ vivado [-mode tcl]
+  Vivado% open_project GarbledCircuit.xpr
+  Vivado% launch_simulation
+  Vivado% run all
 ```
 
 3. Execute Yao's protocol between Alice and Bob
