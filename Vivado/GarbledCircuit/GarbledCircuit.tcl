@@ -242,6 +242,19 @@ add_files -norecurse -fileset $obj $files
 # Set 'sources_1' fileset file properties for local files
 # None
 
+# Set 'sources_1' fileset object
+set obj [get_filesets sources_1]
+set files [list \
+ "[file normalize "$origin_dir/../../XilinxIPs/blk_mem_gen_3/blk_mem_gen_3.xci"]"\
+]
+add_files -norecurse -fileset $obj $files
+
+# Set 'sources_1' fileset file properties for remote files
+# None
+
+# Set 'sources_1' fileset file properties for local files
+# None
+
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
   create_fileset -constrset constrs_1
