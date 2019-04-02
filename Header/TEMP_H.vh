@@ -6,5 +6,5 @@
 /*simulation files*/
 `define SIM	
 parameter CC = 32;
-parameter LOC = "/home/siam/git/hostCPU_TG/bin/scd/hw_aclrtr/hamming_32bit_32cc/";
+parameter LOC = "../../../../../../../FASE_HostCPU/bin/scd/hw_aclrtr/hamming_32bit_32cc/";
 `endif
