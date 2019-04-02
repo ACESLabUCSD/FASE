@@ -5,14 +5,14 @@ module MULT_full_seq_TG #(parameter M = 8)(
 	input clk,
 	input rst,
 	input [0:0] g_input,
-	input [M-1:0] e_init,
+	input [M-1:0] e_input,
 	output [0:0] o
 );
 
 	MULT_full_seq #(.M(M)) _MULT_full_seq(
 		.clk(clk), .rst(rst),
 		.a(g_input),
-		.X(e_init),
+		.X(e_input),
 		.aX(o)
 	);
 
@@ -25,15 +25,12 @@ module MULT_full_seq #(M = 8)(
 	output	[0:0] aX
 );
 
-	logic [M-1:0] A, X0;
+	logic [M-1:0] A;
 	
 	integer i;
 	
 	always@(posedge clk or posedge rst) begin
-		if(rst) begin
-			A <= {M{1'b0}};
-			X0 <= X;
-		end
+		if(rst) A <= {M{1'b0}};
 		else begin
 			A[0] <= a;
 			for(i = 0; i < M-1; i = i+1)
@@ -45,7 +42,7 @@ module MULT_full_seq #(M = 8)(
 	logic [M/2-1:0]CI[log2(M/2):0];
 	logic [M/2-1:0]CO[log2(M/2):0];
 	
-	assign S[0] = A&X0;
+	assign S[0] = A&X;
 		
 	always@(posedge clk or posedge rst) begin
 		if(rst) begin
