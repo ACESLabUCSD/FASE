@@ -20,6 +20,6 @@ compile -ungroup_all -boundary_optimization  -map_effort high -area_effort high 
 set verilogout_no_tri true
 set_fix_multiple_port_nets -all -buffer_constants
 
-write -hierarchy -format verilog -output syn/mult_nbit_x_${M}bit_ncc.v
+write -hierarchy -format verilog -output syn/mult_nbit_x_${M}bit_n_plus_${M}cc.v
 }
 exit
