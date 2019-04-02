@@ -9,7 +9,10 @@ elif [ $1 == "2" ]; then
 elif [ $1 == "3" ]; then
 	design_vision -no_gui -f mult.dcsh
 	rm *.pvl *.syn *.mr *.log *.svf
+elif [ $1 == "4" ]; then
+	design_vision -no_gui -f mult_seq.dcsh
+	rm *.pvl *.syn *.mr *.log *.svf
 else 
-	echo put 1 to compile MAC, 2 to compile MxM, 3 to compile combinational mult
+	echo put 1 to compile MAC, 2 to compile MxM, 3 to compile combinational mult, 4 to compile sequential mult
 fi 
 

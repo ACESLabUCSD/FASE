@@ -1,6 +1,23 @@
 `timescale 1ns / 1ps
 `include "../Header/MAC_H.vh"
 
+module MULT_full_seq_TG #(parameter M = 8)( 
+	input clk,
+	input rst,
+	input [0:0] g_input,
+	input [M-1:0] e_input,
+	output [0:0] o
+);
+
+	MULT_full_seq #(.M(M)) _MULT_full_seq(
+		.clk(clk), .rst(rst),
+		.a(g_input),
+		.X(e_input),
+		.aX(o)
+	);
+
+endmodule
+
 module MULT_full_seq #(M = 8)( 
 	input	clk, rst,
 	input	[0:0] a,
