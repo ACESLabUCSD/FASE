@@ -39,10 +39,11 @@ module tb_GarbledCircuit;
 	
 	integer f_N, f_IL, f_K, f_GT, f_M;
 	integer k, l, line, cycles;
-	integer init_size, input_size, dff_size, output_size, gate_size, num_XOR;
+	integer init_size, input_size, dff_size, output_size, gate_size, XOR_size, non_XOR_size;
 	integer	dff_gate_size;
 	
-	assign dff_gate_size = dff_size + gate_size;	
+	assign dff_gate_size = dff_size + gate_size;
+	assign non_XOR_size = gate_size - XOR_size;	
 	//assign netlist_in = line;
 		
 	initial begin	
@@ -57,7 +58,7 @@ module tb_GarbledCircuit;
 		dff_size = 0;
 		output_size = 0;
 		gate_size = 0;
-		num_XOR = 0;
+		XOR_size = 0;
 		netlist_in = 'b0;	
 		
 		clk = 'b0;
@@ -90,7 +91,7 @@ module tb_GarbledCircuit;
 		
 		$fscanf(f_N, "%h", line);
 		gate_size = line[P-1:0];
-		num_XOR = line[2*P-1:P];
+		XOR_size = line[2*P-1:P];
 		@(posedge clk);
 		netlist_in = line;	
 		
@@ -117,8 +118,8 @@ module tb_GarbledCircuit;
 					Keys[1] = data1_t1;					
 				end
 				else if(tag_t1[1:0] == 2'b10) begin
-					GarbledTables[2*cid*(gate_size-num_XOR)+index0_t1] = data0_t1;
-					GarbledTables[2*cid*(gate_size-num_XOR)+index1_t1] = data1_t1;				
+					GarbledTables[2*cid*(non_XOR_size)+index0_t1] = data0_t1;
+					GarbledTables[2*cid*(non_XOR_size)+index1_t1] = data1_t1;				
 				end
 				else if(tag_t1[1:0] == 2'b11) begin
 					OutputMask[cid] = data0_t1;	
@@ -135,7 +136,7 @@ module tb_GarbledCircuit;
 			$fwrite(f_IL,"%H\n", InLabels[k]);
 		for (k = 0; k < 2; k = k+1)
 			$fwrite(f_K,"%H\n", Keys[k]);
-		for (k = 0; k < CC*(gate_size-num_XOR); k = k+1) begin
+		for (k = 0; k < CC*(non_XOR_size); k = k+1) begin
 			$fwrite(f_GT,"%H\n", GarbledTables[2*k]);
 			$fwrite(f_GT,"%H\n", GarbledTables[2*k+1]);
 		end

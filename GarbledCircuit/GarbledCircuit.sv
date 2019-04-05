@@ -53,7 +53,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 	logic			[S-1:0]	NL_rd_addr;
 	logic			[3:0]	g_logic, g_logic_t1;
 	logic					NL_ready;
-	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR;
+	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, XOR_size, non_XOR_size;
 	logic	signed	[S-1:0]	init_input_size, dff_gate_size;
 	logic					DFF_present;
 	logic					in0F, in1F;
@@ -67,7 +67,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		.rd_addr(NL_rd_addr),
 		.ready(NL_ready),
 		.init_size(init_size), .input_size(input_size), .dff_size(dff_size), 
-		.output_size(output_size), .gate_size(gate_size), .num_XOR(num_XOR),
+		.output_size(output_size), .gate_size(gate_size), .XOR_size(XOR_size),
 		.in0F(in0F), .in1F(in1F),
 		.in0(in0), .in1(in1),
 		.g_logic(g_logic),
@@ -80,6 +80,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		DFF_present = (dff_size > 'd0);
 		init_input_size = init_size + input_size;
 		dff_gate_size = dff_size + gate_size;
+		non_XOR_size = gate_size - XOR_size;
 	end
 	
 	always @(posedge clk or posedge rst) begin
@@ -517,10 +518,10 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 				if(OL_GT_wr_en_end_t1) first_GT = 'b1;
 
 				/*processed all dffs and gates, transferred all garbled tables, and the inputs for the last gate are ready*/
-				if((cur_index >= dff_gate_size-1)&&(GT_ext_rd_addr >= gate_size-num_XOR-1)&&(cur_index_inc == 'b1)) nextState = MASKS;
+				if((cur_index_t1 >= dff_gate_size-1)&&(GT_ext_rd_addr >= non_XOR_size-1)&&(cur_index_inc_t1 == 'b1)) nextState = MASKS;
 			end
-			MASKS: begin
-				if(OM_index == output_size) nextState = RSTCOUNTERS;
+			MASKS: begin	
+				if(OM_index >= output_size) nextState = RSTCOUNTERS; //writing output masks may be done before all the garbled tables are transferred 
 			end
 			RSTCOUNTERS:  begin
 				cid_inc = 'b1;
@@ -622,7 +623,13 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 				end
 			end
 			MASKS: begin
-				if(OM_index == output_size) begin
+				if(OL_GT_wr_en_end_t1) begin
+					tag = 3'b010;
+					index0 = 2*GT_ext_rd_addr;
+					index1 = 2*GT_ext_rd_addr+'d1;
+					data_mem_id = GT_RD; //KEY_0 and KEY_1 equivalent in this case	
+				end
+				else if(OM_index == output_size) begin
 					tag = 3'b011;
 					data_mem_id = OM_RD;
 				end
