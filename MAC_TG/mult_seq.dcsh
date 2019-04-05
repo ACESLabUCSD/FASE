@@ -1,0 +1,25 @@
+set search_path [concat . ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/]
+set target_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/dff_full.db
+set link_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/dff_full.db
+set symbol_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/generic.sdb
+set hdlin_while_loop_iterations 16384
+
+analyze -format verilog {../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/FA.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/ADD.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/TwosComplement.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/ADD_.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/MULT.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/MUX.v}
+
+analyze -format sverilog  {MULT_full_seq.sv}
+
+foreach M {128 256 1024} {
+elaborate MULT_full_seq_TG -architecture verilog -library DEFAULT -parameters $M
+set_max_area -ignore_tns 0 
+set_flatten false -design *
+set_structure -design * false
+set_resource_allocation area_only
+report_compile_options
+compile -ungroup_all -boundary_optimization  -map_effort high -area_effort high -no_design_rule
+
+set verilogout_no_tri true
+set_fix_multiple_port_nets -all -buffer_constants
+
+write -hierarchy -format verilog -output syn/mult_nbit_x_${M}bit_n_plus_${M}cc.v
+}
+exit
