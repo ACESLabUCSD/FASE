@@ -193,7 +193,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		.rd_addr_0(IL_rd_addr_0), .rd_addr_1(IL_rd_addr_1),  
 		.wr_data_0(IL_wr_data_0), .wr_data_1(IL_wr_data_1), 
 		.rd_data_ready_0(IL_rd_data_ready_0), .rd_data_ready_1(IL_rd_data_ready_1),
-		.rd_data_0(IL_rd_data_0_t1), .rd_data_1(IL_rd_data_1_t1)
+		.rd_data_0_t1(IL_rd_data_0_t1), .rd_data_1_t1(IL_rd_data_1_t1)
 	);
 	
 	logic			OL_clr;
@@ -215,7 +215,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		.wr_data_0(OL_wr_data_0_t1), .wr_data_1(OL_wr_data_1_t1), 
 		.rd_data_ready_0(OL_rd_data_ready_0), .rd_data_ready_1(OL_rd_data_ready_1),
 		.stall_rd(OL_stall_rd),
-		.rd_data_0(OL_rd_data_0_t1), .rd_data_1(OL_rd_data_1_t1)
+		.rd_data_0_t1(OL_rd_data_0_t1), .rd_data_1_t1(OL_rd_data_1_t1)
 	);
 	
 	/*The memory for Garbled Tables has half the elements each with twice the bit-width, since tables are generated in pairs*/
@@ -236,7 +236,7 @@ module GarbledCircuit #(parameter S = 13, K = 128)(
 		.rd_addr_0(GT_rd_addr_0), .rd_addr_1(GT_rd_addr_1),  
 		.wr_data_0(GT_wr_data_0_t1), .wr_data_1(GT_wr_data_1_t1), 
 		.rd_data_ready_0(GT_rd_data_ready_0), .rd_data_ready_1(GT_rd_data_ready_1),
-		.rd_data_0(GT_rd_data_0_t1), .rd_data_1(GT_rd_data_1_t1)
+		.rd_data_0_t1(GT_rd_data_0_t1), .rd_data_1_t1(GT_rd_data_1_t1)
 	);	
 			
 	always_comb begin			

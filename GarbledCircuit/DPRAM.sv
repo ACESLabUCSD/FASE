@@ -9,13 +9,13 @@ module DPRAM #(parameter S = 13, K = 128)(
 	input			[K-1:0]	wr_data_0, wr_data_1,  
 	output	logic			rd_data_ready_0, rd_data_ready_1, 
 	output	logic			stall_rd, 
-	output	logic	[K-1:0]	rd_data_0, rd_data_1
+	output	logic	[K-1:0]	rd_data_0_t1, rd_data_1_t1
 );
 	
 	logic			wea, web;
 	logic	[S-1:0]	addra, addrb;  
 	logic	[K-1:0]	dina, dinb;  
-	logic	[K-1:0]	douta, doutb;
+	logic	[K-1:0]	douta_t1, doutb_t1;
 
 `ifdef MEM_OPT
 	logic 			wr_en_q;
@@ -25,7 +25,7 @@ module DPRAM #(parameter S = 13, K = 128)(
 	logic 	[4:0]	mem_state;
 	
 	assign mem_state = {wr_en_q, wr_en_0, wr_en_1, rd_req_0, rd_req_1};
-		
+			
 	always_ff @(posedge clk or posedge rst) begin
 		if(rst) begin 
 			wr_en_q <= 'b0;
@@ -46,6 +46,37 @@ module DPRAM #(parameter S = 13, K = 128)(
 			end			
 		end
 	end
+	
+	typedef enum{
+		NONE,
+		A,
+		B
+	}rd_port_id;
+	
+	rd_port_id rd_port_0, rd_port_0_t1, rd_port_1, rd_port_1_t1;
+	
+	always_ff @(posedge clk or posedge rst)
+		if(rst) begin
+			rd_port_0_t1 <= NONE;
+			rd_port_1_t1 <= NONE;
+		end
+		else begin
+			rd_port_0_t1 <= rd_port_0;
+			rd_port_1_t1 <= rd_port_1;
+		end
+	
+	always_comb begin
+		case(rd_port_0_t1)
+			NONE:	rd_data_0_t1 = 'b0;
+			A:		rd_data_0_t1 = douta_t1;
+			B:		rd_data_0_t1 = doutb_t1;
+		endcase
+		case(rd_port_1_t1)
+			NONE:	rd_data_1_t1 = 'b0;
+			A:		rd_data_1_t1 = douta_t1;
+			B:		rd_data_1_t1 = doutb_t1;
+		endcase
+	end
 
 	always_comb begin
 		stall_rd = 'b0;	
@@ -55,16 +86,16 @@ module DPRAM #(parameter S = 13, K = 128)(
 		addrb = wr_en_1? wr_addr_1:rd_addr_1;
 		dina = wr_data_0;
 		dinb = wr_data_1;
-		rd_data_0 = douta;
-		rd_data_1 = doutb;
+		rd_port_0 = A;
+		rd_port_1 = B;
 		
 		if(mem_state == 5'b00101) begin
 			addra = rd_addr_1;
-			rd_data_1 = douta;
+			rd_port_1 = A;
 		end
 		if(mem_state == 5'b01010) begin
 			addrb = rd_addr_0;
-			rd_data_0 = doutb;
+			rd_port_0 = B;
 		end
 		if((mem_state == 5'b10000)||(mem_state == 5'b10001)) begin
 			wea = 'b1;
@@ -108,8 +139,8 @@ module DPRAM #(parameter S = 13, K = 128)(
 		addrb = wr_en_1? wr_addr_1:rd_addr_1;
 		dina = wr_data_0;
 		dinb = wr_data_1;
-		rd_data_0 = douta;
-		rd_data_1 = doutb;
+		rd_data_0_t1 = douta_t1;
+		rd_data_1_t1 = doutb_t1;
 	end
 `endif
 
@@ -121,12 +152,12 @@ module DPRAM #(parameter S = 13, K = 128)(
 				.wea(wea),     
 				.addra(addra), 
 				.dina(dina),   
-				.douta(douta), 
+				.douta(douta_t1), 
 				.clkb(clk),    
 				.web(web),     
 				.addrb(addrb), 
 				.dinb(dinb),   
-				.doutb(doutb)  
+				.doutb(doutb_t1)  
 			);
 			end
 			else begin: S_10
@@ -135,12 +166,12 @@ module DPRAM #(parameter S = 13, K = 128)(
 				.wea(wea),     
 				.addra(addra), 
 				.dina(dina),   
-				.douta(douta), 
+				.douta(douta_t1), 
 				.clkb(clk),    
 				.web(web),     
 				.addrb(addrb), 
 				.dinb(dinb),   
-				.doutb(doutb)  
+				.doutb(doutb_t1)  
 			);
 			end
 	
@@ -167,12 +198,12 @@ module DPRAM #(parameter S = 13, K = 128)(
 				.wea(wea),     
 				.addra(addra), 
 				.dina(dina),   
-				.douta(douta), 
+				.douta(douta_t1), 
 				.clkb(clk),    
 				.web(web),     
 				.addrb(addrb), 
 				.dinb(dinb),   
-				.doutb(doutb)  
+				.doutb(doutb_t1)  
 			);		
 			
 			always_comb  begin
