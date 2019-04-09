@@ -3,7 +3,7 @@
 
 module tb_MULT_full_seq;
 
-parameter N = 32, M = N; 
+parameter N = 1024, M = N; 
 
 logic 	clk, rst;
 logic  [0:0] a;
@@ -30,7 +30,7 @@ initial begin
 	clk = 1'b0;
 	rst = 1'b1;
 	A = {N{1'b1}};
-	X = {N{1'b1}};
+	X = {(N/2){2'b10}};
 	AX_ref = A*X;
 	#75;
 	rst = 1'b0;
@@ -49,7 +49,8 @@ initial begin
 	@(posedge clk);
 	AX[k+N] = aX;
 	@(posedge clk);
-	$display("A = %d, X = %d, AX = %d, AX_ref = %d, error = %d\n", A, X, AX, AX_ref, AX-AX_ref);
+	$display("A = %d, X = %d, AX = %d, AX_ref = %d\n", A, X, AX, AX_ref);
+	$display("error = %d\n", AX-AX_ref);
 	$stop();
 end
 
