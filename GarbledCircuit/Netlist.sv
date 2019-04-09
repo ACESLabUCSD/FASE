@@ -6,7 +6,7 @@ module Netlist #(parameter S = 14)(
 	input					[31:0]	netlist_in,
 	input					[S-1:0]	rd_addr,
 	output	logic					ready,
-	output	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, num_XOR,
+	output	logic	signed	[S-1:0]	init_size, input_size, dff_size, output_size, gate_size, XOR_size,
 	output	logic					in0F, in1F, //1 if they are inputs of the circuit
 	output	logic	signed	[S-1:0]	in0, in1,
 	output	logic			[3:0]	g_logic,
@@ -73,7 +73,7 @@ module Netlist #(parameter S = 14)(
 		output_size = CircuitParams[2][P-1:0]; 
 		dff_size = CircuitParams[2][2*P-1:P]; 
 		gate_size = CircuitParams[3][P-1:0]; 
-		num_XOR = CircuitParams[3][2*P-1:P];
+		XOR_size = CircuitParams[3][2*P-1:P];
 		
 		init_input_size = init_size + input_size;
 		dff_gate_size = dff_size + gate_size;
