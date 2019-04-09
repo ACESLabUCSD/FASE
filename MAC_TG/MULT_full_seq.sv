@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
 `include "../Header/MAC_H.vh"
 
-module MULT_full_seq_TG #(parameter M = 8)( 
+module MULT_full_seq_TG #(parameter M = 128)( 
 	input clk,
 	input rst,
 	input [0:0] g_input,
-	input [M-1:0] e_input,
+	input [M-1:0] e_init,
 	output [0:0] o
 );
 
 	MULT_full_seq #(.M(M)) _MULT_full_seq(
 		.clk(clk), .rst(rst),
 		.a(g_input),
-		.X(e_input),
+		.X(e_init),
 		.aX(o)
 	);
 
@@ -25,16 +25,20 @@ module MULT_full_seq #(M = 8)(
 	output	[0:0] aX
 );
 
-	logic [M-1:0] A;
+	logic [M-1:0] A, X0;
 	
 	integer i;
 	
 	always@(posedge clk or posedge rst) begin
-		if(rst) A <= {M{1'b0}};
+		if(rst) begin 
+			A <= {M{1'b0}};
+			X0 <= X;
+		end
 		else begin
 			A[0] <= a;
 			for(i = 0; i < M-1; i = i+1)
 				A[i+1] <= A[i];
+			X0 <= X0;
 		end
 	end	
 	
@@ -42,7 +46,7 @@ module MULT_full_seq #(M = 8)(
 	logic [M/2-1:0]CI[log2(M/2):0];
 	logic [M/2-1:0]CO[log2(M/2):0];
 	
-	assign S[0] = A&X;
+	assign S[0] = A&X0;
 		
 	always@(posedge clk or posedge rst) begin
 		if(rst) begin
@@ -58,9 +62,9 @@ module MULT_full_seq #(M = 8)(
 	genvar j, k;
 	
 	generate
-	for (j = 0; j <= log2(M); j = j + 1)
+	for (j = 0; j < log2(M); j = j + 1)
 	begin: col
-		for(k = 0; k <= M/(2**(j+1)); k = k + 1)
+		for(k = 0; k < M/(2**(j+1)); k = k + 1)
 		begin: row
 			ADD #(.N(1)) _ADD(
 				.A(S[j][2*k]),

@@ -25,4 +25,5 @@ work/*
 *.mem
 *.wcfg
 *.jou
+MAC_TG/syn/
 Header/TEMP_H.vh

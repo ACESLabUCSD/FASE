@@ -1,10 +1,10 @@
-set search_path [concat . ../../circuit_synthesis/lib/dff_full/]
-set target_library ../../circuit_synthesis/lib/dff_full/dff_full.db
-set link_library ../../circuit_synthesis/lib/dff_full/dff_full.db
-set symbol_library ../../circuit_synthesis/lib/generic.sdb
+set search_path [concat . ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/]
+set target_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/dff_full.db
+set link_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/dff_full/dff_full.db
+set symbol_library ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/lib/generic.sdb
 set hdlin_while_loop_iterations 16384
 
-analyze -format verilog {../../circuit_synthesis/syn_lib/FA.v ../../circuit_synthesis/syn_lib/ADD.v ../../circuit_synthesis/syn_lib/TwosComplement.v ../../circuit_synthesis/syn_lib/ADD_.v ../../circuit_synthesis/syn_lib/MULT.v ../../circuit_synthesis/syn_lib/MUX.v}
+analyze -format verilog {../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/FA.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/ADD.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/TwosComplement.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/ADD_.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/MULT.v ../../TinyGarbleCircuitSynthesis/SynthesisLibrary/syn_lib/MUX.v}
 
 analyze -format sverilog  {MULT.sv MAC.sv MxM.sv}
 
